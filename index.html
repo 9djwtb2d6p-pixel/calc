@@ -61,6 +61,14 @@ h1{
   align-items:center;
   gap:12px;
   flex-direction:column;
+  cursor:grab;
+  user-select:none;
+  transition:0.2s;
+}
+.grade-row.dragging{
+  opacity:0.6;
+  transform:scale(1.02);
+  box-shadow:0 8px 20px rgba(0,0,0,0.4);
 }
 .grade-inputs{
   display:flex;
@@ -216,6 +224,7 @@ function getColor(num){
 function createInputRow(){
   const row = document.createElement('div');
   row.className='grade-row';
+  row.draggable = true;
   
   const inputContainer = document.createElement('div');
   inputContainer.className='grade-inputs';
@@ -264,6 +273,10 @@ function createInputRow(){
   row.appendChild(bar);
   gradesList.appendChild(row);
   inp.focus();
+  
+  // Drag and drop
+  row.addEventListener('dragstart', e=>{ row.classList.add('dragging'); });
+  row.addEventListener('dragend', e=>{ row.classList.remove('dragging'); });
 }
 
 function calculate(){
@@ -291,7 +304,21 @@ function calculate(){
   gradeMeter.style.background = getColor(avg);
 }
 
-// Initialize with 1 input
+// Drag & drop logic
+gradesList.addEventListener('dragover', e=>{
+  e.preventDefault();
+  const dragging = document.querySelector('.dragging');
+  const afterElement = [...gradesList.querySelectorAll('.grade-row:not(.dragging)')]
+    .reduce((closest, child)=>{
+      const box = child.getBoundingClientRect();
+      const offset = e.clientY - box.top - box.height/2;
+      if(offset < 0 && offset > closest.offset) return {offset:offset, element:child};
+      else return closest;
+    }, {offset:Number.NEGATIVE_INFINITY}).element;
+  if(afterElement) gradesList.insertBefore(dragging, afterElement);
+  else gradesList.appendChild(dragging);
+});
+
 createInputRow();
 addRowBtn.addEventListener('click',createInputRow);
 </script>
