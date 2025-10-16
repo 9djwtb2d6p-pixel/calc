@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Grade Calculator</title>
+<title>Smart Grade Calculator</title>
 <style>
 :root{
   --bg-dark:#0d1117;
@@ -134,6 +134,7 @@ body.light .help-overlay{
   display:flex;
   gap:10px;
   width:100%;
+  position:relative;
 }
 .grade-row input{
   flex:1;
@@ -176,6 +177,26 @@ body.light .grade-row input{
   color:var(--muted-dark);
 }
 body.light .suggestion{color:var(--muted-light);}
+
+.suggestions-list{
+  position:absolute;
+  top:100%;
+  left:0;
+  right:0;
+  background:var(--card-dark);
+  border-radius:10px;
+  max-height:120px;
+  overflow-y:auto;
+  display:none;
+  z-index:5;
+}
+.suggestions-list div{
+  padding:8px 12px;
+  cursor:pointer;
+}
+.suggestions-list div:hover{
+  background:rgba(255,255,255,0.1);
+}
 
 .grade-bar{
   width:100%;
@@ -295,7 +316,7 @@ input[type="file"]{display:none;}
 </head>
 <body>
 <div class="container">
-  <h1>Grade Calculator</h1>
+  <h1>Smart Grade Calculator</h1>
   <div class="help-overlay" id="helpOverlay"></div>
   <button id="settingsBtn">⚙️</button>
   <div id="settingsPanel">
@@ -317,7 +338,7 @@ input[type="file"]{display:none;}
 </div>
 
 <script>
-// Grade Calculator Script
+// Grade Calculator
 const gradesList = document.getElementById('gradesList');
 const addRowBtn = document.getElementById('addRowBtn');
 const avgNum = document.getElementById('avgNum');
@@ -342,143 +363,112 @@ const gradingChart = [
 
 function letterToNum(letter){
   if(!letter) return null;
-  letter = String(letter).trim().toUpperCase();
-  const found = gradingChart.find(g => g.grade === letter);
-  return found ? (found.min + found.max)/2 : null;
+  letter = letter.trim().toUpperCase();
+  const found = gradingChart.find(g=>g.grade===letter);
+  return found ? (found.min+found.max)/2 : null;
 }
+
 function numToLetter(num){
-  const found = gradingChart.find(g => num>=g.min && num<g.max);
+  const found = gradingChart.find(g=>num>=g.min && num<g.max);
   return found ? found.grade : "A";
 }
+
 function getColor(num){return num>=2.71?'var(--good)':num>=1.71?'var(--warn)':'var(--bad)';}
 
 function saveGrades(){
   const values = [...gradesList.querySelectorAll('input')].map(i=>i.value.trim());
   localStorage.setItem('grades', JSON.stringify(values));
 }
+
 function loadGrades(){
   const data = JSON.parse(localStorage.getItem('grades') || '[]');
-  if(data.length){
-    gradesList.innerHTML='';
-    data.forEach(v=>createInputRow(v));
-    calculate(true);
-    updateHelpOverlay();
-  } else createInputRow();
+  gradesList.innerHTML='';
+  if(data.length){data.forEach(v=>createInputRow(v));}
+  else createInputRow();
+  calculate(true); updateHelpOverlay();
 }
 
 function createInputRow(val=''){
-  const row = document.createElement('div');
-  row.className='grade-row'; row.draggable=true;
+  const row=document.createElement('div'); row.className='grade-row'; row.draggable=true;
+  const inputContainer=document.createElement('div'); inputContainer.className='grade-inputs';
+  const inp=document.createElement('input'); inp.type='text'; inp.placeholder='Enter grade'; inp.value=val;
 
-  const inputContainer = document.createElement('div'); inputContainer.className='grade-inputs';
-  const inp = document.createElement('input'); inp.type='text'; inp.placeholder='Enter grade'; inp.value=val;
-
-  const removeBtn = document.createElement('button'); removeBtn.textContent='X'; removeBtn.className='remove-btn';
+  const removeBtn=document.createElement('button'); removeBtn.textContent='X'; removeBtn.className='remove-btn';
   removeBtn.addEventListener('click', ()=>{row.remove(); calculate(true); updateHelpOverlay(); saveGrades();});
 
-  inputContainer.appendChild(inp); inputContainer.appendChild(removeBtn);
+  // Suggestions dropdown
+  const suggList=document.createElement('div'); suggList.className='suggestions-list';
+  inputContainer.appendChild(inp); inputContainer.appendChild(removeBtn); inputContainer.appendChild(suggList);
 
-  const sugg = document.createElement('div'); sugg.className='suggestion';
-  const bar = document.createElement('div'); bar.className='grade-bar';
-  const barFill = document.createElement('div'); barFill.className='grade-bar-fill';
+  const suggText=document.createElement('div'); suggText.className='suggestion';
+  const bar=document.createElement('div'); bar.className='grade-bar';
+  const barFill=document.createElement('div'); barFill.className='grade-bar-fill';
   bar.appendChild(barFill);
 
   inp.addEventListener('input', ()=>{
-    updateBar(inp,barFill,sugg);
-    calculate(true);
-    updateHelpOverlay();
-    saveGrades();
+    updateBar(inp,barFill,suggText);
+    showSuggestions(inp,suggList);
+    calculate(true); updateHelpOverlay(); saveGrades();
   });
 
-  row.appendChild(inputContainer); row.appendChild(sugg); row.appendChild(bar);
+  row.appendChild(inputContainer); row.appendChild(suggText); row.appendChild(bar);
   gradesList.appendChild(row); setTimeout(()=>row.classList.add('show'),50);
   inp.focus();
-
-  row.addEventListener('dragstart',()=>row.classList.add('dragging'));
-  row.addEventListener('dragend',()=>row.classList.remove('dragging'));
-
-  updateBar(inp,barFill,sugg);
 }
 
 function updateBar(inp,barFill,sugg){
   const val=inp.value.trim(); let num=parseFloat(val);
   if(isNaN(num)){
-    const n = letterToNum(val);
-    sugg.textContent = n!==null?`≈ ${n.toFixed(2)}`:'';
-    barFill.style.width = n!==null?(n/4*100)+'%':'0%';
-    barFill.style.background = getColor(n);
-  } else {
-    const letter=numToLetter(num);
-    sugg.textContent = `≈ ${letter}`;
-    barFill.style.width = (num/4*100)+'%';
-    barFill.style.background = getColor(num);
-  }
+    const n=letterToNum(val);
+    if(n!==null){sugg.textContent=`≈ ${n.toFixed(2)}`; barFill.style.width=(n/4*100)+'%'; barFill.style.background=getColor(n);}
+    else {sugg.textContent=''; barFill.style.width='0%'; barFill.style.background=getColor(0);}
+  } else {const letter=numToLetter(num); sugg.textContent=`≈ ${letter}`; barFill.style.width=(num/4*100)+'%'; barFill.style.background=getColor(num);}
+}
+
+function showSuggestions(input, list){
+  const val=input.value.trim().toUpperCase();
+  if(!val){list.style.display='none'; return;}
+  const matches=gradingChart.filter(g=>g.grade.startsWith(val)).map(g=>g.grade);
+  list.innerHTML='';
+  if(matches.length>0){
+    matches.forEach(m=>{
+      const div=document.createElement('div'); div.textContent=m;
+      div.addEventListener('click', ()=>{input.value=m; updateBar(input,input.nextSibling.nextSibling,input.parentElement.nextSibling); list.style.display='none'; input.focus(); calculate(true); saveGrades();});
+      list.appendChild(div);
+    });
+    list.style.display='block';
+  } else list.style.display='none';
 }
 
 function calculate(animate=false){
-  const inputs = gradesList.querySelectorAll('input'); let total=0,count=0;
-  inputs.forEach(i=>{
-    const val = i.value.trim();
-    if(!val) return;
-    let num = parseFloat(val);
-    if(isNaN(num)) num=letterToNum(val);
-    if(num!==null){total+=num; count++;}
-  });
+  const inputs=gradesList.querySelectorAll('input'); let total=0,count=0;
+  inputs.forEach(i=>{const val=i.value.trim(); if(!val) return; let num=parseFloat(val); if(isNaN(num)) num=letterToNum(val); if(num!==null){total+=num; count++;}});
   if(count===0){avgNum.textContent='0.00'; letterGrade.textContent='–'; gradeMeter.style.width='0%'; gradeMeter.style.background='var(--bad)'; return;}
-  const avg = total/count;
-  avgNum.textContent = avg.toFixed(2);
-  letterGrade.textContent = numToLetter(avg);
-  gradeMeter.style.width = (avg/4*100)+'%';
-  gradeMeter.style.background = getColor(avg);
+  const avg=total/count; avgNum.textContent=avg.toFixed(2); letterGrade.textContent=numToLetter(avg); gradeMeter.style.width=(avg/4*100)+'%'; gradeMeter.style.background=getColor(avg);
   if(animate){avgNum.classList.remove('animate'); void avgNum.offsetWidth; avgNum.classList.add('animate');}
 }
 
 function updateHelpOverlay(){
-  const inputs = [...gradesList.querySelectorAll('input')];
-  const emptyCount = inputs.filter(i=>!i.value.trim()).length;
-  const lowGrades = inputs.filter(i=>{const n=parseFloat(i.value)||letterToNum(i.value); return n!==null && n<2.0;}).length;
-  
-  if(emptyCount>0) helpOverlay.textContent = `Remember: ${emptyCount} grades missing. Fill them to get accurate average!`;
-  else if(lowGrades>0) helpOverlay.textContent = `Heads up: ${lowGrades} low grades detected. Focus to improve your average!`;
-  else helpOverlay.textContent = "Great job! All grades entered!";
+  const inputs=[...gradesList.querySelectorAll('input')];
+  const emptyCount=inputs.filter(i=>!i.value.trim()).length;
+  const lowGrades=inputs.filter(i=>{const n=parseFloat(i.value)||letterToNum(i.value); return n!==null && n<2.0;}).length;
+  if(emptyCount>0) helpOverlay.textContent=`Remember: ${emptyCount} grades missing. Fill them to get accurate average!`;
+  else if(lowGrades>0) helpOverlay.textContent=`Heads up: ${lowGrades} low grades detected. Focus to improve your average!`;
+  else helpOverlay.textContent="Great job! All grades entered!";
 }
 
-gradesList.addEventListener('dragover', e=>{
-  e.preventDefault();
-  const dragging=document.querySelector('.dragging');
-  const afterElement=[...gradesList.querySelectorAll('.grade-row:not(.dragging)')].reduce((closest,child)=>{
-    const box=child.getBoundingClientRect();
-    const offset=e.clientY-box.top-box.height/2;
-    if(offset<0 && offset>closest.offset) return {offset:offset, element:child};
-    return closest;
-  },{offset:Number.NEGATIVE_INFINITY}).element;
-  if(afterElement) gradesList.insertBefore(dragging,afterElement);
-  else gradesList.appendChild(dragging);
-  calculate(true); updateHelpOverlay(); saveGrades();
-});
+// Drag & drop
+gradesList.addEventListener('dragover', e=>{e.preventDefault(); const dragging=document.querySelector('.dragging'); const afterElement=[...gradesList.querySelectorAll('.grade-row:not(.dragging)')].reduce((closest,child)=>{const box=child.getBoundingClientRect(); const offset=e.clientY-box.top-box.height/2; if(offset<0 && offset>closest.offset) return {offset:offset,element:child}; return closest;},{offset:Number.NEGATIVE_INFINITY}).element; if(afterElement) gradesList.insertBefore(dragging,afterElement); else gradesList.appendChild(dragging); calculate(true); updateHelpOverlay(); saveGrades();});
 
-settingsBtn.addEventListener('click', ()=>{settingsPanel.style.display = settingsPanel.style.display==='flex'?'none':'flex'; settingsPanel.style.flexDirection='column';});
+// Settings
+settingsBtn.addEventListener('click', ()=>{settingsPanel.style.display=settingsPanel.style.display==='flex'?'none':'flex'; settingsPanel.style.flexDirection='column';});
 themeBtn.addEventListener('click', ()=>{darkMode=!darkMode; document.body.classList.toggle('light',!darkMode);});
 resetBtn.addEventListener('click', ()=>{localStorage.removeItem('grades'); gradesList.innerHTML=''; createInputRow(); calculate(true); updateHelpOverlay();});
-exportBtn.addEventListener('click', ()=>{
-  const values=[...gradesList.querySelectorAll('input')].map(i=>i.value.trim());
-  const csv="data:text/csv;charset=utf-8,"+values.join(",");
-  const encoded=encodeURI(csv);
-  const link=document.createElement('a'); link.setAttribute('href',encoded); link.setAttribute('download','grades.csv'); document.body.appendChild(link); link.click(); link.remove();
-});
+exportBtn.addEventListener('click', ()=>{const values=[...gradesList.querySelectorAll('input')].map(i=>i.value.trim()); const csv="data:text/csv;charset=utf-8,"+values.join(","); const link=document.createElement('a'); link.href=encodeURI(csv); link.download='grades.csv'; document.body.appendChild(link); link.click(); link.remove();});
 importBtn.addEventListener('click', ()=>{fileInput.click();});
-fileInput.addEventListener('change', e=>{
-  const file=e.target.files[0]; if(!file) return;
-  const reader=new FileReader();
-  reader.onload=()=>{
-    const values = reader.result.split(",");
-    gradesList.innerHTML='';
-    values.forEach(v=>createInputRow(v));
-    calculate(true); updateHelpOverlay(); saveGrades();
-  }
-  reader.readAsText(file);
-});
+fileInput.addEventListener('change', e=>{const file=e.target.files[0]; if(!file) return; const reader=new FileReader(); reader.onload=()=>{const values=reader.result.split(","); gradesList.innerHTML=''; values.forEach(v=>createInputRow(v)); calculate(true); updateHelpOverlay(); saveGrades();}; reader.readAsText(file);});
 
+// Init
 loadGrades();
 addRowBtn.addEventListener('click', ()=>{createInputRow(); updateHelpOverlay(); saveGrades();});
 </script>
