@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Grade Calc</title>
+<title>Smart AI Grade Calculator</title>
 <style>
 :root{
   --bg-dark:#0d1117;
   --bg-light:#f7f7f9;
-  --card-dark:rgba(22,27,35,0.95);
-  --card-light:rgba(255,255,255,0.95);
+  --card-dark:rgba(22,27,35,0.9);
+  --card-light:rgba(255,255,255,0.9);
   --accent1:#6a7cff;
   --accent2:#3dd6c6;
   --good:#6fe3b6;
@@ -25,7 +25,6 @@
   font-family:"Inter","Segoe UI",Roboto,sans-serif;
 }
 
-/* Body & Theme */
 body{
   margin:0;
   min-height:100vh;
@@ -35,15 +34,17 @@ body{
   padding:40px 20px;
   background:linear-gradient(135deg,#0d1117,#12151c);
   color:var(--text-dark);
+  overflow-x:hidden;
   transition:background var(--transition), color var(--transition);
 }
+
 body.light{
   background:#f7f7f9;
   color:var(--text-light);
 }
 
-/* Container */
 .container{
+  position:relative;
   width:100%;
   max-width:720px;
   display:flex;
@@ -52,27 +53,26 @@ body.light{
   gap:20px;
 }
 
-/* Card */
 .card{
   width:100%;
   background:var(--card-dark);
-  backdrop-filter:blur(15px);
+  backdrop-filter:blur(20px);
   border-radius:25px;
   padding:30px 25px;
   box-shadow:var(--shadow-dark);
   display:flex;
   flex-direction:column;
-  gap:20px;
+  gap:15px;
   position:relative;
 }
+
 body.light .card{
   background:var(--card-light);
   box-shadow:var(--shadow-light);
 }
 
-/* Header */
 h1{
-  font-size:2.8rem;
+  font-size:3rem;
   font-weight:800;
   margin:0;
   text-align:center;
@@ -81,76 +81,58 @@ h1{
   -webkit-text-fill-color:transparent;
 }
 
-/* Help Overlay */
 .help-overlay{
-  background:rgba(255,255,255,0.1);
-  padding:12px 18px;
+  position:fixed;
+  top:20px;
+  right:20px;
+  background:rgba(255,255,255,0.15);
+  backdrop-filter:blur(10px);
+  padding:15px 20px;
   border-radius:20px;
   color:var(--text-dark);
   font-size:14px;
-  text-align:center;
-  width:100%;
-  box-shadow:0 5px 15px rgba(0,0,0,0.25);
+  max-width:250px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.3);
   transition:all 0.3s ease;
-}
-body.light .help-overlay{
-  background:rgba(255,255,255,0.85);
-  color:var(--text-light);
+  z-index:100;
 }
 
-/* Grades List */
-.grades{
-  display:flex;
-  flex-direction:column;
-  gap:12px;
-  width:100%;
-}
+body.light .help-overlay{color:var(--text-light); background:rgba(255,255,255,0.95);}
 
-/* Grade Row */
+.grades{display:flex;flex-direction:column;gap:15px; width:100%;}
+
 .grade-row{
   display:flex;
   flex-direction:column;
-  gap:6px;
+  gap:8px;
   cursor:grab;
   user-select:none;
-  opacity:0;
-  transform:scale(0.95);
-  transition:all 0.35s cubic-bezier(0.4,0,0.2,1);
+  opacity:0; transform:scale(0.95);
+  transition:all 0.3s ease;
+  position:relative;
 }
-.grade-row.show{
-  opacity:1;
-  transform:scale(1);
-}
-.grade-row.dragging{
-  opacity:0.7;
-  transform:scale(1.03);
-  box-shadow:0 10px 25px rgba(0,0,0,0.4);
-}
+.grade-row.show{opacity:1;transform:scale(1);}
+.grade-row.dragging{opacity:0.7;transform:scale(1.05);box-shadow:0 15px 35px rgba(0,0,0,0.4);}
 
-/* Inputs */
-.grade-inputs{
-  display:flex;
-  gap:10px;
-  width:100%;
-}
+.grade-inputs{display:flex;gap:10px;width:100%;}
 .grade-row input{
   flex:1;
-  padding:12px 16px;
-  border-radius:18px;
+  padding:14px 18px;
+  border-radius:20px;
   border:1px solid rgba(255,255,255,0.1);
   background:rgba(255,255,255,0.05);
   color:var(--text-dark);
-  font-size:15px;
+  font-size:16px;
   transition:all 0.3s ease;
 }
 body.light .grade-row input{color:var(--text-light);}
 .grade-row input:focus{
   outline:none;
-  border-color:var(--accent2);
-  box-shadow:0 0 16px rgba(61,214,198,0.3);
+  border-color:var(--accent1);
+  background:rgba(255,255,255,0.12);
+  box-shadow:0 0 15px rgba(106,124,255,0.3);
 }
 
-/* Remove Button */
 .remove-btn{
   padding:6px 14px;
   font-size:13px;
@@ -163,58 +145,56 @@ body.light .grade-row input{color:var(--text-light);}
 }
 .remove-btn:hover{transform:scale(1.1); opacity:0.9;}
 
-/* Suggestion under input */
 .suggestion{
   font-size:12px;
   color:var(--muted-dark);
-  text-align:right;
 }
 body.light .suggestion{color:var(--muted-light);}
 
-/* Grade Bar */
 .grade-bar{
   width:100%;
-  height:12px;
-  border-radius:10px;
+  height:14px;
+  border-radius:12px;
   background:rgba(255,255,255,0.05);
   overflow:hidden;
+  transition:all 0.4s ease;
 }
 .grade-bar-fill{
   height:100%;
   width:0%;
-  border-radius:10px;
+  border-radius:12px;
   transition:width 0.5s ease, background 0.4s ease;
 }
 
-/* Result */
 .result{
   text-align:center;
-  padding:20px;
-  border-radius:20px;
+  padding:25px;
+  border-radius:25px;
   background:rgba(255,255,255,0.05);
   border:1px solid rgba(255,255,255,0.08);
-  box-shadow:0 10px 30px rgba(0,0,0,0.35);
+  box-shadow:0 15px 35px rgba(0,0,0,0.45);
   display:flex;
   flex-direction:column;
-  gap:10px;
+  gap:15px;
+  width:100%;
 }
+
 .result .num{
-  font-size:2.5rem;
+  font-size:3rem;
   font-weight:700;
   background:linear-gradient(90deg,var(--accent1),var(--accent2));
   -webkit-background-clip:text;
   -webkit-text-fill-color:transparent;
+  transition:all 0.4s ease;
 }
-.result .letter{
-  font-size:1.8rem;
-  font-weight:600;
-}
+.result .num.animate{animation:pulse 0.5s;}
+@keyframes pulse{0%{transform:scale(1);}50%{transform:scale(1.15);}100%{transform:scale(1);}}
+.result .letter{font-size:2rem;font-weight:700;}
 
-/* Add Button */
 button.add-btn{
-  padding:12px 18px;
+  padding:14px 20px;
   font-size:16px;
-  border-radius:22px;
+  border-radius:25px;
   background:linear-gradient(90deg,var(--accent1),var(--accent2));
   color:#071027;
   font-weight:600;
@@ -222,77 +202,62 @@ button.add-btn{
   cursor:pointer;
   transition:all 0.3s ease;
 }
-button.add-btn:hover{
-  transform:scale(1.06);
-  box-shadow:0 0 25px rgba(106,124,255,0.5);
-}
+button.add-btn:hover{transform:scale(1.05);box-shadow:0 0 20px rgba(106,124,255,0.4);}
 
-/* Settings Panel */
 #settingsBtn{
   position:absolute;
-  top:20px;
-  right:20px;
+  top:20px; right:20px;
   background:var(--accent2);
   color:#071027;
   border:none;
-  padding:8px 10px;
-  border-radius:16px;
+  padding:10px 12px;
+  border-radius:18px;
   cursor:pointer;
   transition:all 0.3s ease;
 }
 #settingsBtn:hover{transform:scale(1.1);}
+
 #settingsPanel{
   position:absolute;
-  top:60px;
-  right:20px;
+  top:60px; right:20px;
   background:var(--card-dark);
-  padding:15px;
-  border-radius:16px;
-  box-shadow:0 10px 30px rgba(0,0,0,0.4);
-  display:flex;
+  padding:20px;
+  border-radius:20px;
+  box-shadow:0 15px 35px rgba(0,0,0,0.5);
+  display:none;
   flex-direction:column;
-  gap:10px;
-  min-width:180px;
+  gap:15px;
+  min-width:200px;
   z-index:10;
-  opacity:0;
-  transform:translateY(-20px);
-  transition:opacity 0.3s ease, transform 0.3s ease;
-}
-#settingsPanel.show{
-  opacity:1;
-  transform:translateY(0);
+  transition:all 0.3s ease;
 }
 body.light #settingsPanel{background:var(--card-light);}
 #settingsPanel button{
-  padding:8px 12px;
-  border-radius:16px;
+  padding:10px 14px;
+  border-radius:18px;
   border:none;
   cursor:pointer;
-  font-size:14px;
-  background:linear-gradient(90deg,var(--accent1),var(--accent2));
-  color:#071027;
   transition:all 0.25s ease;
+  font-size:15px;
 }
-#settingsPanel button:hover{
-  transform:scale(1.05);
-  box-shadow:0 4px 20px rgba(106,124,255,0.4);
-}
+#settingsPanel button:hover{transform:scale(1.05);}
+input[type="file"]{display:none;}
 
-/* Responsive */
 @media(max-width:600px){
+  .card{padding:20px;}
   h1{font-size:2rem;}
-  .grade-row input{font-size:14px;padding:10px 12px;}
-  .remove-btn{font-size:12px;padding:5px 10px;}
-  .result .num{font-size:2rem;}
-  .result .letter{font-size:1.5rem;}
-  button.add-btn{font-size:14px;padding:10px 14px;}
+  .grade-row input{font-size:15px;padding:12px 14px;}
+  .remove-btn{padding:5px 12px;font-size:12px;}
+  .result .num{font-size:2.4rem;}
+  .result .letter{font-size:1.8rem;}
+  button.add-btn{font-size:15px;padding:12px;}
 }
 </style>
 </head>
 <body>
 <div class="container">
-  <h1>Grade Calc</h1>
-  <div class="help-overlay" id="helpOverlay">Add your mastery levels from Alma to calculate your average.</div>
+  <h1>Smart AI Grade Calculator</h1>
+  <div class="help-overlay" id="helpOverlay"></div>
   <button id="settingsBtn">⚙️</button>
   <div id="settingsPanel">
     <button id="themeBtn">Toggle Theme</button>
@@ -301,7 +266,7 @@ body.light #settingsPanel{background:var(--card-light);}
     <button id="resetBtn">Reset Data</button>
   </div>
   <div class="card">
-    <button id="addRowBtn" class="add-btn">+ Add Mastery Level</button>
+    <button id="addRowBtn" class="add-btn">+ Add Grade</button>
     <div class="grades" id="gradesList"></div>
     <div class="result" id="result">
       <div class="num" id="avgNum">0.00</div>
@@ -313,103 +278,180 @@ body.light #settingsPanel{background:var(--card-light);}
 </div>
 
 <script>
-// --- Elements ---
+// Persistent AI Learning Smart Grade Calculator
+
 const gradesList = document.getElementById('gradesList');
 const addRowBtn = document.getElementById('addRowBtn');
 const avgNum = document.getElementById('avgNum');
 const letterGrade = document.getElementById('letterGrade');
 const gradeMeter = document.getElementById('gradeMeter');
-const helpOverlay = document.getElementById('helpOverlay');
-const themeBtn = document.getElementById('themeBtn');
-const settingsBtn = document.getElementById('settingsBtn');
-const settingsPanel = document.getElementById('settingsPanel');
 const exportBtn = document.getElementById('exportBtn');
 const importBtn = document.getElementById('importBtn');
 const fileInput = document.getElementById('fileInput');
+const themeBtn = document.getElementById('themeBtn');
+const settingsBtn = document.getElementById('settingsBtn');
+const settingsPanel = document.getElementById('settingsPanel');
+const helpOverlay = document.getElementById('helpOverlay');
 const resetBtn = document.getElementById('resetBtn');
 
 let darkMode = true;
+
 const gradingChart = [
   {grade:"A",min:3.6,max:4.0},{grade:"A-",min:3.31,max:3.6},{grade:"B+",min:3.01,max:3.31},
   {grade:"B",min:2.71,max:3.01},{grade:"B-",min:2.31,max:2.71},{grade:"C+",min:2.01,max:2.31},
   {grade:"C",min:1.71,max:2.01},{grade:"C-",min:1.31,max:1.71},{grade:"D",min:1,max:1.31},{grade:"F",min:0,max:1}
 ];
 
-// --- Helper Functions ---
-function letterToNum(letter){if(!letter)return null;letter=letter.trim().toUpperCase();const g=gradingChart.find(g=>g.grade===letter);return g?(g.min+g.max)/2:null;}
-function numToLetter(num){const g=gradingChart.find(g=>num>=g.min && num<g.max);return g?g.grade:"A";}
+// --- Functions to convert grades ---
+function letterToNum(letter){
+  if(!letter) return null;
+  letter = String(letter).trim().toUpperCase();
+  const found = gradingChart.find(g => g.grade === letter);
+  return found ? (found.min + found.max)/2 : null;
+}
+function numToLetter(num){
+  const found = gradingChart.find(g => num>=g.min && num<g.max);
+  return found ? found.grade : "A";
+}
 function getColor(num){return num>=2.71?'var(--good)':num>=1.71?'var(--warn)':'var(--bad)';}
 
-// --- Create Grade Row ---
-function createRow(val=''){
-  const row=document.createElement('div'); row.className='grade-row'; row.draggable=true;
-  const container=document.createElement('div'); container.className='grade-inputs';
-  const inp=document.createElement('input'); inp.placeholder='Enter grade'; inp.value=val;
-  const remove=document.createElement('button'); remove.className='remove-btn'; remove.textContent='X';
-  remove.onclick=()=>{row.remove(); calculate(true); updateHelp(); saveGrades();}
-  container.append(inp,remove);
-  const sugg=document.createElement('div'); sugg.className='suggestion';
-  const bar=document.createElement('div'); bar.className='grade-bar'; const fill=document.createElement('div'); fill.className='grade-bar-fill'; bar.appendChild(fill);
-  inp.oninput=()=>{updateBar(inp,fill,sugg); calculate(true); updateHelp(); saveGrades();}
-  row.append(container,sugg,bar); gradesList.appendChild(row); setTimeout(()=>row.classList.add('show'),50);
+// --- Persistent Storage ---
+function saveGrades(){
+  const values = [...gradesList.querySelectorAll('input')].map(i=>i.value.trim());
+  localStorage.setItem('grades', JSON.stringify(values));
+}
+function loadGrades(){
+  const data = JSON.parse(localStorage.getItem('grades') || '[]');
+  if(data.length){
+    gradesList.innerHTML='';
+    data.forEach(v=>createInputRow(v));
+    calculate(true);
+    updateHelpOverlay();
+  } else createInputRow();
+}
+
+// --- Create input row ---
+function createInputRow(val=''){
+  const row = document.createElement('div');
+  row.className='grade-row'; row.draggable=true;
+
+  const inputContainer = document.createElement('div'); inputContainer.className='grade-inputs';
+  const inp = document.createElement('input'); inp.type='text'; inp.placeholder='Enter grade'; inp.value=val;
+
+  const removeBtn = document.createElement('button'); removeBtn.textContent='X'; removeBtn.className='remove-btn';
+  removeBtn.addEventListener('click', ()=>{row.remove(); calculate(true); updateHelpOverlay(); saveGrades();});
+
+  inputContainer.appendChild(inp); inputContainer.appendChild(removeBtn);
+
+  const sugg = document.createElement('div'); sugg.className='suggestion';
+  const bar = document.createElement('div'); bar.className='grade-bar';
+  const barFill = document.createElement('div'); barFill.className='grade-bar-fill';
+  bar.appendChild(barFill);
+
+  inp.addEventListener('input', ()=>{
+    updateBar(inp,barFill,sugg);
+    calculate(true);
+    updateHelpOverlay();
+    saveGrades();
+  });
+
+  row.appendChild(inputContainer); row.appendChild(sugg); row.appendChild(bar);
+  gradesList.appendChild(row); setTimeout(()=>row.classList.add('show'),50);
   inp.focus();
-  row.ondragstart=()=>row.classList.add('dragging'); row.ondragend=()=>row.classList.remove('dragging');
-  updateBar(inp,fill,sugg);
+
+  row.addEventListener('dragstart',()=>row.classList.add('dragging'));
+  row.addEventListener('dragend',()=>row.classList.remove('dragging'));
+
+  updateBar(inp,barFill,sugg);
 }
 
-// --- Update Bar ---
-function updateBar(inp,fill,sugg){
+// --- Update progress bar ---
+function updateBar(inp,barFill,sugg){
   const val=inp.value.trim(); let num=parseFloat(val);
-  if(isNaN(num)){const n=letterToNum(val); sugg.textContent=n!==null?`≈ ${n.toFixed(2)}`:''; fill.style.width=n!==null?(n/4*100)+'%':'0%'; fill.style.background=getColor(n);}
-  else{const letter=numToLetter(num); sugg.textContent=`≈ ${letter}`; fill.style.width=(num/4*100)+'%'; fill.style.background=getColor(num);}
+  if(isNaN(num)){
+    const n = letterToNum(val);
+    sugg.textContent = n!==null?`≈ ${n.toFixed(2)}`:'';
+    barFill.style.width = n!==null?(n/4*100)+'%':'0%';
+    barFill.style.background = getColor(n);
+  } else {
+    const letter=numToLetter(num);
+    sugg.textContent = `≈ ${letter}`;
+    barFill.style.width = (num/4*100)+'%';
+    barFill.style.background = getColor(num);
+  }
 }
 
-// --- Calculate Average ---
+// --- Calculate average ---
 function calculate(animate=false){
-  const inputs=[...gradesList.querySelectorAll('input')]; let total=0,count=0;
-  inputs.forEach(i=>{const val=i.value.trim(); if(!val)return; let num=parseFloat(val); if(isNaN(num)) num=letterToNum(val); if(num!==null){total+=num; count++;}});
+  const inputs = gradesList.querySelectorAll('input'); let total=0,count=0;
+  inputs.forEach(i=>{
+    const val = i.value.trim();
+    if(!val) return;
+    let num = parseFloat(val);
+    if(isNaN(num)) num=letterToNum(val);
+    if(num!==null){total+=num; count++;}
+  });
   if(count===0){avgNum.textContent='0.00'; letterGrade.textContent='–'; gradeMeter.style.width='0%'; gradeMeter.style.background='var(--bad)'; return;}
-  const avg=total/count; avgNum.textContent=avg.toFixed(2); letterGrade.textContent=numToLetter(avg); gradeMeter.style.width=(avg/4*100)+'%'; gradeMeter.style.background=getColor(avg);
+  const avg = total/count;
+  avgNum.textContent = avg.toFixed(2);
+  letterGrade.textContent = numToLetter(avg);
+  gradeMeter.style.width = (avg/4*100)+'%';
+  gradeMeter.style.background = getColor(avg);
   if(animate){avgNum.classList.remove('animate'); void avgNum.offsetWidth; avgNum.classList.add('animate');}
 }
 
-// --- Update Help Overlay ---
-function updateHelp(){
-  const inputs=[...gradesList.querySelectorAll('input')];
-  const empty=inputs.filter(i=>!i.value.trim()).length;
-  const low=inputs.filter(i=>{const n=parseFloat(i.value)||letterToNum(i.value); return n!==null && n<2.0;}).length;
-  if(empty>0) helpOverlay.textContent=`Add ${empty} missing mastery levels from Alma.`;
-  else if(low>0) helpOverlay.textContent=`Some low scores detected. Double-check mastery levels.`;
-  else helpOverlay.textContent=`All mastery levels entered. Great!`;
+// --- Smart AI help overlay ---
+function updateHelpOverlay(){
+  const inputs = [...gradesList.querySelectorAll('input')];
+  const emptyCount = inputs.filter(i=>!i.value.trim()).length;
+  const lowGrades = inputs.filter(i=>{const n=parseFloat(i.value)||letterToNum(i.value); return n!==null && n<2.0;}).length;
+  
+  if(emptyCount>0) helpOverlay.textContent = `Remember: ${emptyCount} mastery levels missing. Fill them to get accurate average!`;
+  else if(lowGrades>0) helpOverlay.textContent = `Heads up: ${lowGrades} low grades detected. Focus to improve your average!`;
+  else helpOverlay.textContent = "Great job! All grades entered and looking strong!";
 }
 
-// --- Drag & Drop ---
-gradesList.addEventListener('dragover',e=>{
+// --- Drag & drop ---
+gradesList.addEventListener('dragover', e=>{
   e.preventDefault();
   const dragging=document.querySelector('.dragging');
-  const after=[...gradesList.querySelectorAll('.grade-row:not(.dragging)')].reduce((closest,child)=>{
-    const box=child.getBoundingClientRect(); const offset=e.clientY-box.top-box.height/2;
-    if(offset<0 && offset>closest.offset) return {offset:offset,element:child}; return closest;
+  const afterElement=[...gradesList.querySelectorAll('.grade-row:not(.dragging)')].reduce((closest,child)=>{
+    const box=child.getBoundingClientRect();
+    const offset=e.clientY-box.top-box.height/2;
+    if(offset<0 && offset>closest.offset) return {offset:offset, element:child};
+    return closest;
   },{offset:Number.NEGATIVE_INFINITY}).element;
-  if(after) gradesList.insertBefore(dragging,after); else gradesList.appendChild(dragging);
-  calculate(true); updateHelp(); saveGrades();
+  if(afterElement) gradesList.insertBefore(dragging,afterElement);
+  else gradesList.appendChild(dragging);
+  calculate(true); updateHelpOverlay(); saveGrades();
 });
 
-// --- Settings Panel Toggle ---
-settingsBtn.onclick=()=>{settingsPanel.classList.toggle('show');}
-themeBtn.onclick=()=>{darkMode=!darkMode; document.body.classList.toggle('light',!darkMode);}
-resetBtn.onclick=()=>{localStorage.removeItem('grades'); gradesList.innerHTML=''; createRow(); calculate(true); updateHelp();}
-exportBtn.onclick=()=>{const vals=[...gradesList.querySelectorAll('input')].map(i=>i.value.trim()); const csv="data:text/csv;charset=utf-8,"+vals.join(","); const link=document.createElement('a'); link.href=encodeURI(csv); link.download='grades.csv'; document.body.appendChild(link); link.click(); link.remove();}
-importBtn.onclick=()=>{fileInput.click();}
-fileInput.onchange=(e)=>{const file=e.target.files[0]; if(!file) return; const reader=new FileReader(); reader.onload=()=>{const vals=reader.result.split(","); gradesList.innerHTML=''; vals.forEach(v=>createRow(v)); calculate(true); updateHelp(); saveGrades();}; reader.readAsText(file);}
-
-// --- Persistent Storage ---
-function saveGrades(){const vals=[...gradesList.querySelectorAll('input')].map(i=>i.value.trim()); localStorage.setItem('grades',JSON.stringify(vals));}
-function loadGrades(){const vals=JSON.parse(localStorage.getItem('grades')||'[]'); gradesList.innerHTML=''; if(vals.length){vals.forEach(v=>createRow(v)); calculate(true); updateHelp();} else createRow();}
+// --- Settings ---
+settingsBtn.addEventListener('click', ()=>{settingsPanel.style.display = settingsPanel.style.display==='flex'?'none':'flex'; settingsPanel.style.flexDirection='column';});
+themeBtn.addEventListener('click', ()=>{darkMode=!darkMode; document.body.classList.toggle('light',!darkMode);});
+resetBtn.addEventListener('click', ()=>{localStorage.removeItem('grades'); gradesList.innerHTML=''; createInputRow(); calculate(true); updateHelpOverlay();});
+exportBtn.addEventListener('click', ()=>{
+  const values=[...gradesList.querySelectorAll('input')].map(i=>i.value.trim());
+  const csv="data:text/csv;charset=utf-8,"+values.join(",");
+  const encoded=encodeURI(csv);
+  const link=document.createElement('a'); link.setAttribute('href',encoded); link.setAttribute('download','grades.csv'); document.body.appendChild(link); link.click(); link.remove();
+});
+importBtn.addEventListener('click', ()=>{fileInput.click();});
+fileInput.addEventListener('change', e=>{
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    const values = reader.result.split(",");
+    gradesList.innerHTML='';
+    values.forEach(v=>createInputRow(v));
+    calculate(true); updateHelpOverlay(); saveGrades();
+  }
+  reader.readAsText(file);
+});
 
 // --- Init ---
 loadGrades();
-addRowBtn.onclick=()=>{createRow(); updateHelp(); saveGrades();}
+addRowBtn.addEventListener('click', ()=>{createInputRow(); updateHelpOverlay(); saveGrades();});
 </script>
 </body>
 </html>
