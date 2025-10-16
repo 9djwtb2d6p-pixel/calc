@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ultimate Smart Grade Calculator</title>
+<title>Smart AI Grade Calculator</title>
 <style>
 :root{
   --bg-dark:#0d1117;
@@ -63,7 +63,6 @@ body.light{
   display:flex;
   flex-direction:column;
   gap:15px;
-  transition:all var(--transition);
   position:relative;
 }
 
@@ -257,13 +256,14 @@ input[type="file"]{display:none;}
 </head>
 <body>
 <div class="container">
-  <h1>Ultimate Smart Grade Calculator</h1>
-  <div class="help-overlay" id="helpOverlay">Tip: Enter your mastery levels below to see your average grade.</div>
+  <h1>Smart AI Grade Calculator</h1>
+  <div class="help-overlay" id="helpOverlay"></div>
   <button id="settingsBtn">⚙️</button>
   <div id="settingsPanel">
     <button id="themeBtn">Toggle Theme</button>
     <button id="exportBtn">Export CSV</button>
     <button id="importBtn">Import CSV</button>
+    <button id="resetBtn">Reset Data</button>
   </div>
   <div class="card">
     <button id="addRowBtn" class="add-btn">+ Add Grade</button>
@@ -278,92 +278,180 @@ input[type="file"]{display:none;}
 </div>
 
 <script>
-// Elements
-const gradesList=document.getElementById('gradesList');
-const addRowBtn=document.getElementById('addRowBtn');
-const avgNum=document.getElementById('avgNum');
-const letterGrade=document.getElementById('letterGrade');
-const gradeMeter=document.getElementById('gradeMeter');
-const exportBtn=document.getElementById('exportBtn');
-const importBtn=document.getElementById('importBtn');
-const fileInput=document.getElementById('fileInput');
-const themeBtn=document.getElementById('themeBtn');
-const settingsBtn=document.getElementById('settingsBtn');
-const settingsPanel=document.getElementById('settingsPanel');
-const helpOverlay=document.getElementById('helpOverlay');
+// Persistent AI Learning Smart Grade Calculator
 
-let darkMode=true;
-const gradingChart=[
+const gradesList = document.getElementById('gradesList');
+const addRowBtn = document.getElementById('addRowBtn');
+const avgNum = document.getElementById('avgNum');
+const letterGrade = document.getElementById('letterGrade');
+const gradeMeter = document.getElementById('gradeMeter');
+const exportBtn = document.getElementById('exportBtn');
+const importBtn = document.getElementById('importBtn');
+const fileInput = document.getElementById('fileInput');
+const themeBtn = document.getElementById('themeBtn');
+const settingsBtn = document.getElementById('settingsBtn');
+const settingsPanel = document.getElementById('settingsPanel');
+const helpOverlay = document.getElementById('helpOverlay');
+const resetBtn = document.getElementById('resetBtn');
+
+let darkMode = true;
+
+const gradingChart = [
   {grade:"A",min:3.6,max:4.0},{grade:"A-",min:3.31,max:3.6},{grade:"B+",min:3.01,max:3.31},
   {grade:"B",min:2.71,max:3.01},{grade:"B-",min:2.31,max:2.71},{grade:"C+",min:2.01,max:2.31},
   {grade:"C",min:1.71,max:2.01},{grade:"C-",min:1.31,max:1.71},{grade:"D",min:1,max:1.31},{grade:"F",min:0,max:1}
 ];
 
-const suggestionsPool=[
-  "Tip: Enter mastery levels to calculate your average.",
-  "Hint: Higher mastery levels improve your grade average!",
-  "Did you know? Accurate scores give better insights.",
-  "Quick tip: Add all your mastery scores below.",
-  "Smart move: Track your progress by entering scores."
-];
+// --- Functions to convert grades ---
+function letterToNum(letter){
+  if(!letter) return null;
+  letter = String(letter).trim().toUpperCase();
+  const found = gradingChart.find(g => g.grade === letter);
+  return found ? (found.min + found.max)/2 : null;
+}
+function numToLetter(num){
+  const found = gradingChart.find(g => num>=g.min && num<g.max);
+  return found ? found.grade : "A";
+}
+function getColor(num){return num>=2.71?'var(--good)':num>=1.71?'var(--warn)':'var(--bad)';}
 
-function letterToNum(letter){if(!letter) return null; letter=String(letter).trim().toUpperCase(); const found=gradingChart.find(g=>g.grade===letter); return found?(found.min+found.max)/2:null;}
-function numToLetter(num){const found=gradingChart.find(g=>num>=g.min && num<g.max); return found?found.grade:"A";}
-function getColor(num){if(num>=2.71) return 'var(--good)'; if(num>=1.71) return 'var(--warn)'; return 'var(--bad)';}
+// --- Persistent Storage ---
+function saveGrades(){
+  const values = [...gradesList.querySelectorAll('input')].map(i=>i.value.trim());
+  localStorage.setItem('grades', JSON.stringify(values));
+}
+function loadGrades(){
+  const data = JSON.parse(localStorage.getItem('grades') || '[]');
+  if(data.length){
+    gradesList.innerHTML='';
+    data.forEach(v=>createInputRow(v));
+    calculate(true);
+    updateHelpOverlay();
+  } else createInputRow();
+}
 
+// --- Create input row ---
 function createInputRow(val=''){
-  if(val instanceof Event) val='';
-  const row=document.createElement('div'); row.className='grade-row'; row.draggable=true;
-  const inputContainer=document.createElement('div'); inputContainer.className='grade-inputs';
-  const inp=document.createElement('input'); inp.type='text'; inp.placeholder='Enter grade'; inp.value=val;
-  const removeBtn=document.createElement('button'); removeBtn.textContent='X'; removeBtn.className='remove-btn';
-  removeBtn.addEventListener('click',()=>{row.style.opacity='0'; row.style.transform='scale(0.8)'; setTimeout(()=>{row.remove(); calculate(); updateHelpOverlay();},200);});
+  const row = document.createElement('div');
+  row.className='grade-row'; row.draggable=true;
+
+  const inputContainer = document.createElement('div'); inputContainer.className='grade-inputs';
+  const inp = document.createElement('input'); inp.type='text'; inp.placeholder='Enter grade'; inp.value=val;
+
+  const removeBtn = document.createElement('button'); removeBtn.textContent='X'; removeBtn.className='remove-btn';
+  removeBtn.addEventListener('click', ()=>{row.remove(); calculate(true); updateHelpOverlay(); saveGrades();});
+
   inputContainer.appendChild(inp); inputContainer.appendChild(removeBtn);
-  const sugg=document.createElement('div'); sugg.className='suggestion';
-  const bar=document.createElement('div'); bar.className='grade-bar'; const barFill=document.createElement('div'); barFill.className='grade-bar-fill'; bar.appendChild(barFill);
-  inp.addEventListener('input',()=>{updateBar(inp,barFill,sugg); calculate(true); updateHelpOverlay();});
+
+  const sugg = document.createElement('div'); sugg.className='suggestion';
+  const bar = document.createElement('div'); bar.className='grade-bar';
+  const barFill = document.createElement('div'); barFill.className='grade-bar-fill';
+  bar.appendChild(barFill);
+
+  inp.addEventListener('input', ()=>{
+    updateBar(inp,barFill,sugg);
+    calculate(true);
+    updateHelpOverlay();
+    saveGrades();
+  });
+
   row.appendChild(inputContainer); row.appendChild(sugg); row.appendChild(bar);
-  gradesList.appendChild(row); setTimeout(()=>row.classList.add('show'),50); inp.focus();
-  row.addEventListener('dragstart',()=>{row.classList.add('dragging');});
-  row.addEventListener('dragend',()=>{row.classList.remove('dragging');});
+  gradesList.appendChild(row); setTimeout(()=>row.classList.add('show'),50);
+  inp.focus();
+
+  row.addEventListener('dragstart',()=>row.classList.add('dragging'));
+  row.addEventListener('dragend',()=>row.classList.remove('dragging'));
+
   updateBar(inp,barFill,sugg);
 }
 
+// --- Update progress bar ---
 function updateBar(inp,barFill,sugg){
   const val=inp.value.trim(); let num=parseFloat(val);
-  if(isNaN(num)){const n=letterToNum(val); sugg.textContent=n!==null?`≈ ${n.toFixed(2)}`:''; barFill.style.width=n!==null?(n/4*100)+'%':'0%'; barFill.style.background=getColor(n);}
-  else{const letter=numToLetter(num); sugg.textContent=`≈ ${letter}`; barFill.style.width=(num/4*100)+'%'; barFill.style.background=getColor(num);}
+  if(isNaN(num)){
+    const n = letterToNum(val);
+    sugg.textContent = n!==null?`≈ ${n.toFixed(2)}`:'';
+    barFill.style.width = n!==null?(n/4*100)+'%':'0%';
+    barFill.style.background = getColor(n);
+  } else {
+    const letter=numToLetter(num);
+    sugg.textContent = `≈ ${letter}`;
+    barFill.style.width = (num/4*100)+'%';
+    barFill.style.background = getColor(num);
+  }
 }
 
+// --- Calculate average ---
 function calculate(animate=false){
-  const inputs=gradesList.querySelectorAll('input'); let total=0,count=0;
-  inputs.forEach(i=>{const val=i.value.trim(); if(!val) return; let num=parseFloat(val); if(isNaN(num)) num=letterToNum(val); if(num!==null){total+=num; count++;}});
+  const inputs = gradesList.querySelectorAll('input'); let total=0,count=0;
+  inputs.forEach(i=>{
+    const val = i.value.trim();
+    if(!val) return;
+    let num = parseFloat(val);
+    if(isNaN(num)) num=letterToNum(val);
+    if(num!==null){total+=num; count++;}
+  });
   if(count===0){avgNum.textContent='0.00'; letterGrade.textContent='–'; gradeMeter.style.width='0%'; gradeMeter.style.background='var(--bad)'; return;}
-  const avg=total/count; avgNum.textContent=avg.toFixed(2); letterGrade.textContent=numToLetter(avg); gradeMeter.style.width=(avg/4*100)+'%'; gradeMeter.style.background=getColor(avg);
+  const avg = total/count;
+  avgNum.textContent = avg.toFixed(2);
+  letterGrade.textContent = numToLetter(avg);
+  gradeMeter.style.width = (avg/4*100)+'%';
+  gradeMeter.style.background = getColor(avg);
   if(animate){avgNum.classList.remove('animate'); void avgNum.offsetWidth; avgNum.classList.add('animate');}
 }
 
+// --- Smart AI help overlay ---
 function updateHelpOverlay(){
-  const inputs=[...gradesList.querySelectorAll('input')];
-  const emptyCount=inputs.filter(i=>!i.value.trim()).length;
-  let index=Math.floor(Math.random()*suggestionsPool.length);
-  let suggestion=suggestionsPool[index];
-  if(emptyCount===0) suggestion="Awesome! All grades entered. See your average above!";
-  helpOverlay.textContent=suggestion;
+  const inputs = [...gradesList.querySelectorAll('input')];
+  const emptyCount = inputs.filter(i=>!i.value.trim()).length;
+  const lowGrades = inputs.filter(i=>{const n=parseFloat(i.value)||letterToNum(i.value); return n!==null && n<2.0;}).length;
+  
+  if(emptyCount>0) helpOverlay.textContent = `Remember: ${emptyCount} mastery levels missing. Fill them to get accurate average!`;
+  else if(lowGrades>0) helpOverlay.textContent = `Heads up: ${lowGrades} low grades detected. Focus to improve your average!`;
+  else helpOverlay.textContent = "Great job! All grades entered and looking strong!";
 }
 
-// Drag & drop
-gradesList.addEventListener('dragover',e=>{e.preventDefault(); const dragging=document.querySelector('.dragging'); const afterElement=[...gradesList.querySelectorAll('.grade-row:not(.dragging)')].reduce((closest,child)=>{const box=child.getBoundingClientRect(); const offset=e.clientY-box.top-box.height/2; if(offset<0 && offset>closest.offset) return {offset:offset, element:child}; return closest;},{offset:Number.NEGATIVE_INFINITY}).element; if(afterElement) gradesList.insertBefore(dragging,afterElement); else gradesList.appendChild(dragging); calculate(); updateHelpOverlay();});
+// --- Drag & drop ---
+gradesList.addEventListener('dragover', e=>{
+  e.preventDefault();
+  const dragging=document.querySelector('.dragging');
+  const afterElement=[...gradesList.querySelectorAll('.grade-row:not(.dragging)')].reduce((closest,child)=>{
+    const box=child.getBoundingClientRect();
+    const offset=e.clientY-box.top-box.height/2;
+    if(offset<0 && offset>closest.offset) return {offset:offset, element:child};
+    return closest;
+  },{offset:Number.NEGATIVE_INFINITY}).element;
+  if(afterElement) gradesList.insertBefore(dragging,afterElement);
+  else gradesList.appendChild(dragging);
+  calculate(true); updateHelpOverlay(); saveGrades();
+});
 
-// Settings toggle
-settingsBtn.addEventListener('click',()=>{settingsPanel.style.display=settingsPanel.style.display==='flex'?'none':'flex'; settingsPanel.style.flexDirection='column';});
-themeBtn.addEventListener('click',()=>{darkMode=!darkMode; document.body.classList.toggle('light',!darkMode);});
-exportBtn.addEventListener('click',()=>{const values=[...gradesList.querySelectorAll('input')].map(i=>i.value.trim()); const csv="data:text/csv;charset=utf-8,"+values.join(","); const encoded=encodeURI(csv); const link=document.createElement('a'); link.setAttribute('href',encoded); link.setAttribute('download','grades.csv'); document.body.appendChild(link); link.click(); link.remove();});
-importBtn.addEventListener('click',()=>{fileInput.click();});
-fileInput.addEventListener('change',(e)=>{const file=e.target.files[0]; if(!file) return; const reader=new FileReader(); reader.onload=()=>{ const text=reader.result; const values=text.split(","); gradesList.innerHTML=''; values.forEach(v=>createInputRow(v)); calculate(true); updateHelpOverlay(); }; reader.readAsText(file);});
+// --- Settings ---
+settingsBtn.addEventListener('click', ()=>{settingsPanel.style.display = settingsPanel.style.display==='flex'?'none':'flex'; settingsPanel.style.flexDirection='column';});
+themeBtn.addEventListener('click', ()=>{darkMode=!darkMode; document.body.classList.toggle('light',!darkMode);});
+resetBtn.addEventListener('click', ()=>{localStorage.removeItem('grades'); gradesList.innerHTML=''; createInputRow(); calculate(true); updateHelpOverlay();});
+exportBtn.addEventListener('click', ()=>{
+  const values=[...gradesList.querySelectorAll('input')].map(i=>i.value.trim());
+  const csv="data:text/csv;charset=utf-8,"+values.join(",");
+  const encoded=encodeURI(csv);
+  const link=document.createElement('a'); link.setAttribute('href',encoded); link.setAttribute('download','grades.csv'); document.body.appendChild(link); link.click(); link.remove();
+});
+importBtn.addEventListener('click', ()=>{fileInput.click();});
+fileInput.addEventListener('change', e=>{
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    const values = reader.result.split(",");
+    gradesList.innerHTML='';
+    values.forEach(v=>createInputRow(v));
+    calculate(true); updateHelpOverlay(); saveGrades();
+  }
+  reader.readAsText(file);
+});
 
-// Initial
-createInputRow(); addRowBtn.addEventListener('click',()=>{createInputRow(); updateHelpOverlay();});
+// --- Init ---
+loadGrades();
+addRowBtn.addEventListener('click', ()=>{createInputRow(); updateHelpOverlay(); saveGrades();});
 </script>
 </body>
 </html>
