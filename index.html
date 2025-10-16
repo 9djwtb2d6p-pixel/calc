@@ -3,23 +3,28 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Grade Calc</title>
+<title>Grade Calc Pro</title>
 <style>
 :root{
-  --bg:#0b0f14;
-  --card:#11141a;
+  --bg-dark:#0b0f14;
+  --bg-light:#f4f4f9;
+  --card-dark:#11141a;
+  --card-light:#fff;
   --glass: rgba(255,255,255,0.05);
   --accent1:#6a7cff;
   --accent2:#3dd6c6;
   --good:#6fe3b6;
   --warn:#ffbe5b;
   --bad:#ff7d7d;
-  --text:#e8eef3;
-  --muted:#8a93a2;
-  --shadow:0 10px 25px rgba(0,0,0,0.6);
+  --text-dark:#e8eef3;
+  --text-light:#111;
+  --muted-dark:#8a93a2;
+  --muted-light:#555;
+  --shadow-dark:0 10px 25px rgba(0,0,0,0.6);
+  --shadow-light:0 10px 25px rgba(0,0,0,0.1);
   font-family:"Inter","Segoe UI",Roboto,sans-serif;
+  --transition:0.3s ease;
 }
-*{box-sizing:border-box;}
 body{
   margin:0;
   min-height:100vh;
@@ -27,22 +32,29 @@ body{
   justify-content:center;
   align-items:flex-start;
   padding:20px;
-  background:radial-gradient(900px 600px at 10% 10%, rgba(106,124,255,0.05), transparent),
-             radial-gradient(900px 500px at 90% 90%, rgba(61,214,198,0.04), transparent),
-             var(--bg);
-  color:var(--text);
+  background:var(--bg-dark);
+  color:var(--text-dark);
+  transition:background var(--transition), color var(--transition);
+}
+body.light{
+  background:var(--bg-light);
+  color:var(--text-light);
 }
 .container{
   width:100%;
-  max-width:500px;
-  background:var(--card);
+  max-width:520px;
+  background:var(--card-dark);
   border-radius:25px;
   padding:25px;
-  box-shadow:var(--shadow);
+  box-shadow:var(--shadow-dark);
   display:flex;
   flex-direction:column;
   gap:20px;
-  transition:all 0.3s ease;
+  transition:all var(--transition);
+}
+body.light .container{
+  background:var(--card-light);
+  box-shadow:var(--shadow-light);
 }
 h1{
   font-size:2.2rem;
@@ -52,11 +64,7 @@ h1{
   -webkit-text-fill-color:transparent;
   text-align:center;
 }
-.grades{
-  display:flex;
-  flex-direction:column;
-  gap:12px;
-}
+.grades{display:flex;flex-direction:column;gap:12px;}
 .grade-row{
   display:flex;
   flex-direction:column;
@@ -64,157 +72,51 @@ h1{
   cursor:grab;
   user-select:none;
   transition:all 0.25s ease;
-  opacity:0;
-  transform:scale(0.95);
+  opacity:0;transform:scale(0.95);
 }
-.grade-row.show{
-  opacity:1;
-  transform:scale(1);
-}
-.grade-row.dragging{
-  opacity:0.6;
-  transform:scale(1.03);
-  box-shadow:0 14px 28px rgba(0,0,0,0.5);
-}
-.grade-inputs{
-  display:flex;
-  gap:10px;
-  width:100%;
-}
-.grade-row input{
-  flex:1;
-  padding:12px 14px;
-  border-radius:16px;
-  border:1px dashed rgba(255,255,255,0.1);
-  background:rgba(255,255,255,0.02);
-  color:var(--text);
-  font-size:15px;
-  transition:all 0.3s ease;
-}
-.grade-row input:focus{
-  outline:none;
-  border-color:var(--accent1);
-  background:rgba(255,255,255,0.05);
-  box-shadow:0 0 12px rgba(106,124,255,0.3);
-}
-.remove-btn{
-  padding:6px 12px;
-  font-size:12px;
-  background:var(--bad);
-  color:#fff;
-  border-radius:14px;
-  border:none;
-  cursor:pointer;
-  transition:all 0.25s ease;
-}
-.remove-btn:hover{
-  transform:scale(1.08);
-  opacity:0.85;
-}
-.suggestion{
-  font-size:12px;
-  color:var(--muted);
-}
-.grade-bar{
-  width:100%;
-  height:12px;
-  border-radius:10px;
-  background:rgba(255,255,255,0.05);
-  overflow:hidden;
-  transition:all 0.4s ease;
-}
-.grade-bar-fill{
-  height:100%;
-  width:0%;
-  border-radius:10px;
-  transition:width 0.5s ease, background 0.4s ease;
-}
-.result{
-  text-align:center;
-  padding:18px;
-  border-radius:20px;
-  background:var(--glass);
-  border:1px solid rgba(255,255,255,0.06);
-  box-shadow:0 10px 25px rgba(0,0,0,0.45);
-  display:flex;
-  flex-direction:column;
-  gap:12px;
-  transition:all 0.4s ease;
-}
-.result .num{
-  font-size:2.6rem;
-  font-weight:700;
-  background:linear-gradient(90deg,var(--accent1),var(--accent2));
-  -webkit-background-clip:text;
-  -webkit-text-fill-color:transparent;
-  transition:all 0.4s ease;
-}
-.result .num.animate{
-  animation:pulse 0.5s;
-}
-@keyframes pulse{
-  0%{transform:scale(1);}
-  50%{transform:scale(1.15);}
-  100%{transform:scale(1);}
-}
-.result .letter{
-  font-size:1.8rem;
-  font-weight:700;
-}
-.flex-row{
-  display:flex;
-  gap:10px;
-}
-button.add-btn{
-  flex:1;
-  padding:10px;
-  font-size:15px;
-  border-radius:20px;
-  background:linear-gradient(90deg,var(--accent1),var(--accent2));
-  color:#071027;
-  font-weight:600;
-  border:none;
-  cursor:pointer;
-  transition:all 0.25s ease;
-}
-button.add-btn:hover{
-  transform:scale(1.04);
-  box-shadow:0 0 20px rgba(106,124,255,0.5);
-}
-
-/* Responsive tweaks */
-@media(max-width:500px){
-  .container{padding:20px;}
-  h1{font-size:2rem;}
-  .grade-row input{font-size:14px; padding:10px 12px;}
-  .remove-btn{padding:5px 10px; font-size:11px;}
-  .result .num{font-size:2.2rem;}
-  .result .letter{font-size:1.5rem;}
-  button.add-btn{font-size:14px; padding:10px;}
-}
-@media(max-width:360px){
-  .container{padding:15px;}
-  h1{font-size:1.8rem;}
-  .grade-row input{font-size:13px; padding:8px 10px;}
-  .remove-btn{padding:4px 8px; font-size:10px;}
-  .result .num{font-size:2rem;}
-  .result .letter{font-size:1.3rem;}
-  button.add-btn{font-size:13px; padding:8px;}
-}
+.grade-row.show{opacity:1;transform:scale(1);}
+.grade-row.dragging{opacity:0.6;transform:scale(1.03);box-shadow:0 14px 28px rgba(0,0,0,0.5);}
+.grade-inputs{display:flex;gap:10px;width:100%;}
+.grade-row input{flex:1;padding:12px 14px;border-radius:16px;border:1px dashed rgba(255,255,255,0.1);background:rgba(255,255,255,0.02);color:var(--text-dark);font-size:15px;transition:all 0.3s ease;}
+body.light .grade-row input{color:var(--text-light);}
+.grade-row input:focus{outline:none;border-color:var(--accent1);background:rgba(255,255,255,0.08);box-shadow:0 0 12px rgba(106,124,255,0.3);}
+.remove-btn{padding:6px 12px;font-size:12px;background:var(--bad);color:#fff;border-radius:14px;border:none;cursor:pointer;transition:all 0.25s ease;}
+.remove-btn:hover{transform:scale(1.08);opacity:0.85;}
+.suggestion{font-size:12px;color:var(--muted-dark);}
+body.light .suggestion{color:var(--muted-light);}
+.grade-bar{width:100%;height:12px;border-radius:10px;background:rgba(255,255,255,0.05);overflow:hidden;transition:all 0.4s ease;}
+.grade-bar-fill{height:100%;width:0%;border-radius:10px;transition:width 0.5s ease, background 0.4s ease;}
+.result{text-align:center;padding:18px;border-radius:20px;background:var(--glass);border:1px solid rgba(255,255,255,0.06);box-shadow:0 10px 25px rgba(0,0,0,0.45);display:flex;flex-direction:column;gap:12px;transition:all 0.4s ease;}
+.result .num{font-size:2.6rem;font-weight:700;background:linear-gradient(90deg,var(--accent1),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;transition:all 0.4s ease;}
+.result .num.animate{animation:pulse 0.5s;}
+@keyframes pulse{0%{transform:scale(1);}50%{transform:scale(1.15);}100%{transform:scale(1);}}
+.result .letter{font-size:1.8rem;font-weight:700;}
+.flex-row{display:flex;gap:10px;}
+button.add-btn{flex:1;padding:10px;font-size:15px;border-radius:20px;background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#071027;font-weight:600;border:none;cursor:pointer;transition:all 0.25s ease;}
+button.add-btn:hover{transform:scale(1.04);box-shadow:0 0 20px rgba(106,124,255,0.5);}
+button.export-btn{padding:8px 12px;font-size:14px;border-radius:16px;border:none;background:var(--accent2);color:#071027;cursor:pointer;transition:all 0.25s ease;}
+button.export-btn:hover{transform:scale(1.05);}
+.theme-btn{padding:8px 12px;font-size:14px;border-radius:16px;border:none;background:var(--accent1);color:#071027;cursor:pointer;transition:all 0.25s ease;}
+.theme-btn:hover{transform:scale(1.05);}
+@media(max-width:500px){.container{padding:20px;}h1{font-size:2rem;}.grade-row input{font-size:14px; padding:10px 12px;}.remove-btn{padding:5px 10px;font-size:11px;}.result .num{font-size:2.2rem;}.result .letter{font-size:1.5rem;}button.add-btn{font-size:14px; padding:10px;}}
 </style>
 </head>
 <body>
 <div class="container">
-  <h1>Grade Calc</h1>
-  <div class="grades" id="gradesList"></div>
+  <h1>Grade Calc Pro</h1>
   <div class="flex-row">
     <button id="addRowBtn" class="add-btn">+ Add Grade</button>
+    <button id="exportBtn" class="export-btn">Export CSV</button>
+    <button id="importBtn" class="export-btn">Import CSV</button>
+    <button id="themeBtn" class="theme-btn">Toggle Theme</button>
   </div>
+  <div class="grades" id="gradesList"></div>
   <div class="result" id="result">
     <div class="num" id="avgNum">0.00</div>
     <div class="letter" id="letterGrade">–</div>
     <div class="meter"><div class="fill" id="gradeMeter"></div></div>
   </div>
+  <input type="file" id="fileInput" style="display:none;" accept=".csv"/>
 </div>
 
 <script>
@@ -223,6 +125,12 @@ const addRowBtn=document.getElementById('addRowBtn');
 const avgNum=document.getElementById('avgNum');
 const letterGrade=document.getElementById('letterGrade');
 const gradeMeter=document.getElementById('gradeMeter');
+const exportBtn=document.getElementById('exportBtn');
+const importBtn=document.getElementById('importBtn');
+const fileInput=document.getElementById('fileInput');
+const themeBtn=document.getElementById('themeBtn');
+
+let darkMode=true;
 
 const gradingChart=[
   {grade:"A",min:3.6,max:4.0},
@@ -243,19 +151,17 @@ function letterToNum(letter){
   const found=gradingChart.find(g=>g.grade===letter);
   return found?(found.min+found.max)/2:null;
 }
-
 function numToLetter(num){
   const found=gradingChart.find(g=>num>=g.min && num<g.max);
   return found?found.grade:"A";
 }
-
 function getColor(num){
   if(num>=2.71) return 'var(--good)';
   if(num>=1.71) return 'var(--warn)';
   return 'var(--bad)';
 }
 
-function createInputRow(){
+function createInputRow(val=''){
   const row=document.createElement('div');
   row.className='grade-row';
   row.draggable=true;
@@ -266,6 +172,7 @@ function createInputRow(){
   const inp=document.createElement('input');
   inp.type='text';
   inp.placeholder='Enter grade';
+  inp.value=val;
 
   const removeBtn=document.createElement('button');
   removeBtn.textContent='X';
@@ -289,19 +196,7 @@ function createInputRow(){
   bar.appendChild(barFill);
 
   inp.addEventListener('input',()=>{
-    const val=inp.value.trim();
-    let num=parseFloat(val);
-    if(isNaN(num)){
-      const n=letterToNum(val);
-      sugg.textContent=n!==null?`≈ ${n.toFixed(2)}`:'';
-      if(n!==null) barFill.style.width=(n/4*100)+'%';
-      barFill.style.background=getColor(n);
-    }else{
-      const letter=numToLetter(num);
-      sugg.textContent=`≈ ${letter}`;
-      barFill.style.width=(num/4*100)+'%';
-      barFill.style.background=getColor(num);
-    }
+    updateBar(inp,barFill,sugg);
     calculate(true);
   });
 
@@ -314,6 +209,23 @@ function createInputRow(){
 
   row.addEventListener('dragstart',()=>{row.classList.add('dragging');});
   row.addEventListener('dragend',()=>{row.classList.remove('dragging');});
+  updateBar(inp,barFill,sugg);
+}
+
+function updateBar(inp,barFill,sugg){
+  const val=inp.value.trim();
+  let num=parseFloat(val);
+  if(isNaN(num)){
+    const n=letterToNum(val);
+    sugg.textContent=n!==null?`≈ ${n.toFixed(2)}`:'';
+    barFill.style.width=n!==null?(n/4*100)+'%':'0%';
+    barFill.style.background=getColor(n);
+  }else{
+    const letter=numToLetter(num);
+    sugg.textContent=`≈ ${letter}`;
+    barFill.style.width=(num/4*100)+'%';
+    barFill.style.background=getColor(num);
+  }
 }
 
 function calculate(animate=false){
@@ -345,6 +257,7 @@ function calculate(animate=false){
   }
 }
 
+// Drag & drop
 gradesList.addEventListener('dragover',e=>{
   e.preventDefault();
   const dragging=document.querySelector('.dragging');
@@ -360,6 +273,42 @@ gradesList.addEventListener('dragover',e=>{
   calculate();
 });
 
+// Theme toggle
+themeBtn.addEventListener('click',()=>{
+  darkMode=!darkMode;
+  document.body.classList.toggle('light',!darkMode);
+});
+
+// CSV Export
+exportBtn.addEventListener('click',()=>{
+  const values=[...gradesList.querySelectorAll('input')].map(i=>i.value.trim());
+  const csv="data:text/csv;charset=utf-8," + values.join(",");
+  const encoded=encodeURI(csv);
+  const link=document.createElement('a');
+  link.setAttribute('href',encoded);
+  link.setAttribute('download','grades.csv');
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+});
+
+// CSV Import
+importBtn.addEventListener('click',()=>{fileInput.click();});
+fileInput.addEventListener('change',(e)=>{
+  const file=e.target.files[0];
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=()=>{ 
+    const text=reader.result;
+    const values=text.split(",");
+    gradesList.innerHTML='';
+    values.forEach(v=>createInputRow(v));
+    calculate(true);
+  };
+  reader.readAsText(file);
+});
+
+// Initial
 createInputRow();
 addRowBtn.addEventListener('click',createInputRow);
 </script>
