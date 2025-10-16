@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Grade Calc</title>
+<title>Smart Grade Calc</title>
 <style>
 :root{
   --bg-dark:#0d1117;
@@ -52,7 +52,7 @@ body.light{
   box-shadow:var(--shadow-dark);
   display:flex;
   flex-direction:column;
-  gap:25px;
+  gap:15px;
   position:relative;
   transition:all var(--transition);
 }
@@ -71,6 +71,16 @@ h1{
   -webkit-background-clip:text;
   -webkit-text-fill-color:transparent;
 }
+
+.help-text{
+  font-size:14px;
+  color:var(--muted-dark);
+  text-align:center;
+  margin-bottom:10px;
+  min-height:18px;
+  transition:color 0.3s ease;
+}
+body.light .help-text{color:var(--muted-light);}
 
 .grades{display:flex;flex-direction:column;gap:15px;}
 
@@ -228,7 +238,8 @@ input[type="file"]{display:none;}
 </head>
 <body>
 <div class="container">
-  <h1>Grade Calc</h1>
+  <h1>Smart Grade Calc</h1>
+  <div class="help-text" id="helpText">Tip: Enter your mastery levels from Alma below to see your average grade.</div>
   <button id="settingsBtn">⚙️</button>
   <div id="settingsPanel">
     <button id="themeBtn">Toggle Theme</button>
@@ -258,6 +269,7 @@ const fileInput=document.getElementById('fileInput');
 const themeBtn=document.getElementById('themeBtn');
 const settingsBtn=document.getElementById('settingsBtn');
 const settingsPanel=document.getElementById('settingsPanel');
+const helpText=document.getElementById('helpText');
 
 let darkMode=true;
 const gradingChart=[
@@ -266,6 +278,16 @@ const gradingChart=[
   {grade:"C",min:1.71,max:2.01},{grade:"C-",min:1.31,max:1.71},{grade:"D",min:1,max:1.31},{grade:"F",min:0,max:1}
 ];
 
+// Smart suggestions pool
+const suggestionsPool=[
+  "Tip: Enter your mastery levels from Alma to see your average grade.",
+  "Hint: Higher mastery levels increase your average—enter them below!",
+  "Did you know? Inputting accurate Alma scores gives a better result.",
+  "Quick tip: Add all your mastery scores below for instant feedback.",
+  "Smart move: Track your progress by entering each mastery level."
+];
+
+// Utility functions
 function letterToNum(letter){if(!letter) return null; letter=String(letter).trim().toUpperCase(); const found=gradingChart.find(g=>g.grade===letter); return found?(found.min+found.max)/2:null;}
 function numToLetter(num){const found=gradingChart.find(g=>num>=g.min && num<g.max); return found?found.grade:"A";}
 function getColor(num){if(num>=2.71) return 'var(--good)'; if(num>=1.71) return 'var(--warn)'; return 'var(--bad)';}
@@ -277,11 +299,11 @@ function createInputRow(val=''){
   const inputContainer=document.createElement('div'); inputContainer.className='grade-inputs';
   const inp=document.createElement('input'); inp.type='text'; inp.placeholder='Enter grade'; inp.value=val;
   const removeBtn=document.createElement('button'); removeBtn.textContent='X'; removeBtn.className='remove-btn';
-  removeBtn.addEventListener('click',()=>{row.style.opacity='0'; row.style.transform='scale(0.8)'; setTimeout(()=>{row.remove(); calculate();},200);});
+  removeBtn.addEventListener('click',()=>{row.style.opacity='0'; row.style.transform='scale(0.8)'; setTimeout(()=>{row.remove(); calculate(); updateHelpText();},200);});
   inputContainer.appendChild(inp); inputContainer.appendChild(removeBtn);
   const sugg=document.createElement('div'); sugg.className='suggestion';
   const bar=document.createElement('div'); bar.className='grade-bar'; const barFill=document.createElement('div'); barFill.className='grade-bar-fill'; bar.appendChild(barFill);
-  inp.addEventListener('input',()=>{updateBar(inp,barFill,sugg); calculate(true);});
+  inp.addEventListener('input',()=>{updateBar(inp,barFill,sugg); calculate(true); updateHelpText();});
   row.appendChild(inputContainer); row.appendChild(sugg); row.appendChild(bar);
   gradesList.appendChild(row); setTimeout(()=>row.classList.add('show'),50); inp.focus();
   row.addEventListener('dragstart',()=>{row.classList.add('dragging');});
@@ -289,12 +311,14 @@ function createInputRow(val=''){
   updateBar(inp,barFill,sugg);
 }
 
+// Update bar fill
 function updateBar(inp,barFill,sugg){
   const val=inp.value.trim(); let num=parseFloat(val);
   if(isNaN(num)){const n=letterToNum(val); sugg.textContent=n!==null?`≈ ${n.toFixed(2)}`:''; barFill.style.width=n!==null?(n/4*100)+'%':'0%'; barFill.style.background=getColor(n);}
   else{const letter=numToLetter(num); sugg.textContent=`≈ ${letter}`; barFill.style.width=(num/4*100)+'%'; barFill.style.background=getColor(num);}
 }
 
+// Calculate average
 function calculate(animate=false){
   const inputs=gradesList.querySelectorAll('input'); let total=0,count=0;
   inputs.forEach(i=>{const val=i.value.trim(); if(!val) return; let num=parseFloat(val); if(isNaN(num)) num=letterToNum(val); if(num!==null){total+=num; count++;}});
@@ -303,21 +327,34 @@ function calculate(animate=false){
   if(animate){avgNum.classList.remove('animate'); void avgNum.offsetWidth; avgNum.classList.add('animate');}
 }
 
+// Dynamic help text
+function updateHelpText(){
+  const inputs=[...gradesList.querySelectorAll('input')];
+  const emptyCount=inputs.filter(i=>!i.value.trim()).length;
+  let index=Math.floor(Math.random()*suggestionsPool.length);
+  let suggestion=suggestionsPool[index];
+  if(emptyCount===0) suggestion="Great! All grades entered—check your average above!";
+  helpText.textContent=suggestion;
+}
+
 // Drag & drop
-gradesList.addEventListener('dragover',e=>{e.preventDefault(); const dragging=document.querySelector('.dragging'); const afterElement=[...gradesList.querySelectorAll('.grade-row:not(.dragging)')].reduce((closest,child)=>{const box=child.getBoundingClientRect(); const offset=e.clientY-box.top-box.height/2; if(offset<0 && offset>closest.offset) return {offset:offset, element:child}; return closest;},{offset:Number.NEGATIVE_INFINITY}).element; if(afterElement) gradesList.insertBefore(dragging,afterElement); else gradesList.appendChild(dragging); calculate();});
+gradesList.addEventListener('dragover',e=>{e.preventDefault(); const dragging=document.querySelector('.dragging'); const afterElement=[...gradesList.querySelectorAll('.grade-row:not(.dragging)')].reduce((closest,child)=>{const box=child.getBoundingClientRect(); const offset=e.clientY-box.top-box.height/2; if(offset<0 && offset>closest.offset) return {offset:offset, element:child}; return closest;},{offset:Number.NEGATIVE_INFINITY}).element; if(afterElement) gradesList.insertBefore(dragging,afterElement); else gradesList.appendChild(dragging); calculate(); updateHelpText();});
 
 // Settings toggle
 settingsBtn.addEventListener('click',()=>{settingsPanel.style.display=settingsPanel.style.display==='flex'?'none':'flex'; settingsPanel.style.flexDirection='column';});
+
 // Theme toggle
 themeBtn.addEventListener('click',()=>{darkMode=!darkMode; document.body.classList.toggle('light',!darkMode);});
+
 // CSV Export
 exportBtn.addEventListener('click',()=>{const values=[...gradesList.querySelectorAll('input')].map(i=>i.value.trim()); const csv="data:text/csv;charset=utf-8,"+values.join(","); const encoded=encodeURI(csv); const link=document.createElement('a'); link.setAttribute('href',encoded); link.setAttribute('download','grades.csv'); document.body.appendChild(link); link.click(); link.remove();});
+
 // CSV Import
 importBtn.addEventListener('click',()=>{fileInput.click();});
-fileInput.addEventListener('change',(e)=>{const file=e.target.files[0]; if(!file) return; const reader=new FileReader(); reader.onload=()=>{ const text=reader.result; const values=text.split(","); gradesList.innerHTML=''; values.forEach(v=>createInputRow(v)); calculate(true); }; reader.readAsText(file);});
+fileInput.addEventListener('change',(e)=>{const file=e.target.files[0]; if(!file) return; const reader=new FileReader(); reader.onload=()=>{ const text=reader.result; const values=text.split(","); gradesList.innerHTML=''; values.forEach(v=>createInputRow(v)); calculate(true); updateHelpText(); }; reader.readAsText(file);});
 
-// Initial
-createInputRow(); addRowBtn.addEventListener('click',createInputRow);
+// Initial row
+createInputRow(); addRowBtn.addEventListener('click',()=>{createInputRow(); updateHelpText();});
 </script>
 </body>
 </html>
