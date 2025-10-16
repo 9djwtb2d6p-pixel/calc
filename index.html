@@ -167,6 +167,24 @@ button.add-btn:hover{
   transform:scale(1.03);
   box-shadow:0 0 15px rgba(106,124,255,0.4);
 }
+.histogram{
+  display:flex;
+  gap:6px;
+  margin-top:10px;
+  height:60px;
+}
+.hist-bar{
+  flex:1;
+  border-radius:6px;
+  background:rgba(255,255,255,0.05);
+  display:flex;
+  align-items:flex-end;
+  transition:0.3s;
+}
+.hist-fill{
+  width:100%;
+  border-radius:6px 6px 0 0;
+}
 </style>
 </head>
 <body>
@@ -181,6 +199,7 @@ button.add-btn:hover{
     <div class="letter" id="letterGrade">–</div>
     <div class="meter"><div class="fill" id="gradeMeter"></div></div>
   </div>
+  <div class="histogram" id="histogram"></div>
 </div>
 
 <script>
@@ -189,6 +208,7 @@ const addRowBtn = document.getElementById('addRowBtn');
 const avgNum = document.getElementById('avgNum');
 const letterGrade = document.getElementById('letterGrade');
 const gradeMeter = document.getElementById('gradeMeter');
+const histogram = document.getElementById('histogram');
 
 const gradingChart=[
   {grade:"A",min:3.6,max:4.0},
@@ -282,18 +302,20 @@ function createInputRow(){
 function calculate(){
   const inputs = gradesList.querySelectorAll('input');
   let total=0, count=0;
+  let grades = [];
   inputs.forEach(i=>{
     const val = i.value.trim();
     if(!val) return;
     let num = parseFloat(val);
     if(isNaN(num)) num = letterToNum(val);
-    if(num!==null){ total+=num; count++; }
+    if(num!==null){ total+=num; count++; grades.push(num); }
   });
   if(count===0){
     avgNum.textContent='0.00';
     letterGrade.textContent='–';
     gradeMeter.style.width='0%';
     gradeMeter.style.background='var(--bad)';
+    histogram.innerHTML='';
     return;
   }
   const avg = total/count;
@@ -302,6 +324,21 @@ function calculate(){
   const pct = Math.min(100, (avg/4)*100);
   gradeMeter.style.width = pct+'%';
   gradeMeter.style.background = getColor(avg);
+  updateHistogram(grades);
+}
+
+function updateHistogram(grades){
+  histogram.innerHTML='';
+  grades.forEach(g=>{
+    const bar = document.createElement('div');
+    bar.className='hist-bar';
+    const fill = document.createElement('div');
+    fill.className='hist-fill';
+    fill.style.height = (g/4*100)+'%';
+    fill.style.background = getColor(g);
+    bar.appendChild(fill);
+    histogram.appendChild(bar);
+  });
 }
 
 // Drag & drop logic
@@ -317,6 +354,7 @@ gradesList.addEventListener('dragover', e=>{
     }, {offset:Number.NEGATIVE_INFINITY}).element;
   if(afterElement) gradesList.insertBefore(dragging, afterElement);
   else gradesList.appendChild(dragging);
+  calculate();
 });
 
 createInputRow();
