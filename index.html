@@ -16,7 +16,7 @@
   --bad:#ff7d7d;
   --text:#e8eef3;
   --muted:#8a93a2;
-  --shadow:0 8px 20px rgba(0,0,0,0.6);
+  --shadow:0 10px 25px rgba(0,0,0,0.6);
   font-family:"Inter","Segoe UI",Roboto,sans-serif;
 }
 *{box-sizing:border-box;}
@@ -41,10 +41,11 @@ body{
   box-shadow:var(--shadow);
   display:flex;
   flex-direction:column;
-  gap:20px;
+  gap:25px;
+  transition:all 0.3s ease;
 }
 h1{
-  font-size:2.2rem;
+  font-size:2.3rem;
   margin:0;
   background:linear-gradient(90deg,var(--accent1),var(--accent2));
   -webkit-background-clip:text;
@@ -54,87 +55,85 @@ h1{
 .grades{
   display:flex;
   flex-direction:column;
-  gap:12px;
+  gap:15px;
 }
 .grade-row{
   display:flex;
-  align-items:center;
-  gap:12px;
   flex-direction:column;
+  gap:8px;
   cursor:grab;
   user-select:none;
-  transition:0.2s;
+  transition:all 0.2s ease;
 }
 .grade-row.dragging{
   opacity:0.6;
   transform:scale(1.02);
-  box-shadow:0 8px 20px rgba(0,0,0,0.4);
+  box-shadow:0 12px 25px rgba(0,0,0,0.5);
 }
 .grade-inputs{
   display:flex;
-  width:100%;
   gap:12px;
+  width:100%;
 }
 .grade-row input{
   flex:1;
-  padding:10px 14px;
-  border-radius:15px;
+  padding:12px 16px;
+  border-radius:18px;
   border:1px dashed rgba(255,255,255,0.1);
   background:rgba(255,255,255,0.02);
   color:var(--text);
   font-size:16px;
-  transition:0.2s;
+  transition:all 0.25s ease;
 }
 .grade-row input:focus{
   outline:none;
   border-color:var(--accent1);
   background:rgba(255,255,255,0.05);
-  box-shadow:0 0 10px rgba(106,124,255,0.3);
+  box-shadow:0 0 12px rgba(106,124,255,0.3);
 }
 .remove-btn{
-  padding:6px 12px;
+  padding:6px 14px;
   font-size:13px;
   background:var(--bad);
   color:#fff;
-  border-radius:12px;
+  border-radius:15px;
   border:none;
   cursor:pointer;
-  transition:0.2s;
+  transition:0.2s ease;
 }
 .remove-btn:hover{
-  transform:scale(1.05);
+  transform:scale(1.08);
   opacity:0.85;
 }
 .suggestion{
   font-size:12px;
   color:var(--muted);
-  width:100%;
-  text-align:left;
 }
 .grade-bar{
   width:100%;
-  height:12px;
-  border-radius:8px;
+  height:14px;
+  border-radius:10px;
   background:rgba(255,255,255,0.05);
   overflow:hidden;
-  margin-top:4px;
+  transition:all 0.3s ease;
 }
 .grade-bar-fill{
   height:100%;
   width:0%;
-  border-radius:8px;
-  transition:width 0.3s, background 0.3s;
+  border-radius:10px;
+  transition:width 0.4s ease, background 0.3s ease;
 }
 .result{
   text-align:center;
-  padding:20px;
-  border-radius:20px;
+  padding:22px;
+  border-radius:22px;
   background:var(--glass);
   border:1px solid rgba(255,255,255,0.06);
-  box-shadow:0 6px 20px rgba(0,0,0,0.4);
+  box-shadow:0 8px 25px rgba(0,0,0,0.45);
   display:flex;
   flex-direction:column;
-  gap:12px;
+  gap:14px;
+  transition:all 0.3s ease;
 }
 .result .num{
   font-size:3rem;
@@ -149,41 +148,23 @@ h1{
 }
 .flex-row{
   display:flex;
-  gap:10px;
+  gap:12px;
 }
 button.add-btn{
   flex:1;
-  padding:10px;
+  padding:12px;
   font-size:16px;
-  border-radius:20px;
+  border-radius:22px;
   background:linear-gradient(90deg,var(--accent1),var(--accent2));
   color:#071027;
   font-weight:600;
   border:none;
   cursor:pointer;
-  transition:0.2s;
+  transition:0.2s ease;
 }
 button.add-btn:hover{
   transform:scale(1.03);
-  box-shadow:0 0 15px rgba(106,124,255,0.4);
-}
-.histogram{
-  display:flex;
-  gap:6px;
-  margin-top:10px;
-  height:60px;
-}
-.hist-bar{
-  flex:1;
-  border-radius:6px;
-  background:rgba(255,255,255,0.05);
-  display:flex;
-  align-items:flex-end;
-  transition:0.3s;
-}
-.hist-fill{
-  width:100%;
-  border-radius:6px 6px 0 0;
+  box-shadow:0 0 20px rgba(106,124,255,0.4);
 }
 </style>
 </head>
@@ -199,7 +180,6 @@ button.add-btn:hover{
     <div class="letter" id="letterGrade">–</div>
     <div class="meter"><div class="fill" id="gradeMeter"></div></div>
   </div>
-  <div class="histogram" id="histogram"></div>
 </div>
 
 <script>
@@ -208,7 +188,6 @@ const addRowBtn = document.getElementById('addRowBtn');
 const avgNum = document.getElementById('avgNum');
 const letterGrade = document.getElementById('letterGrade');
 const gradeMeter = document.getElementById('gradeMeter');
-const histogram = document.getElementById('histogram');
 
 const gradingChart=[
   {grade:"A",min:3.6,max:4.0},
@@ -244,115 +223,94 @@ function getColor(num){
 function createInputRow(){
   const row = document.createElement('div');
   row.className='grade-row';
-  row.draggable = true;
-  
-  const inputContainer = document.createElement('div');
+  row.draggable=true;
+
+  const inputContainer=document.createElement('div');
   inputContainer.className='grade-inputs';
-  
-  const inp = document.createElement('input');
+
+  const inp=document.createElement('input');
   inp.type='text';
   inp.placeholder='Enter grade';
-  
-  const removeBtn = document.createElement('button');
+
+  const removeBtn=document.createElement('button');
   removeBtn.textContent='X';
   removeBtn.className='remove-btn';
-  removeBtn.title='Remove this grade';
   removeBtn.addEventListener('click',()=>{row.remove(); calculate();});
-  
+
   inputContainer.appendChild(inp);
   inputContainer.appendChild(removeBtn);
-  
-  const sugg = document.createElement('div');
+
+  const sugg=document.createElement('div');
   sugg.className='suggestion';
-  
-  const bar = document.createElement('div');
+
+  const bar=document.createElement('div');
   bar.className='grade-bar';
-  const barFill = document.createElement('div');
+  const barFill=document.createElement('div');
   barFill.className='grade-bar-fill';
   bar.appendChild(barFill);
-  
+
   inp.addEventListener('input',()=>{
-    const val = inp.value.trim();
-    let num = parseFloat(val);
+    const val=inp.value.trim();
+    let num=parseFloat(val);
     if(isNaN(num)){
-      const n = letterToNum(val);
-      sugg.textContent = n!==null ? `≈ ${n.toFixed(2)}` : '';
-      if(n!==null) barFill.style.width = (n/4*100)+'%';
-      barFill.style.background = getColor(n);
+      const n=letterToNum(val);
+      sugg.textContent=n!==null?`≈ ${n.toFixed(2)}`:'';
+      if(n!==null) barFill.style.width=(n/4*100)+'%';
+      barFill.style.background=getColor(n);
     }else{
-      const letter = numToLetter(num);
-      sugg.textContent = `≈ ${letter}`;
-      barFill.style.width = (num/4*100)+'%';
-      barFill.style.background = getColor(num);
+      const letter=numToLetter(num);
+      sugg.textContent=`≈ ${letter}`;
+      barFill.style.width=(num/4*100)+'%';
+      barFill.style.background=getColor(num);
     }
     calculate();
   });
-  
+
   row.appendChild(inputContainer);
   row.appendChild(sugg);
   row.appendChild(bar);
   gradesList.appendChild(row);
   inp.focus();
-  
-  // Drag and drop
-  row.addEventListener('dragstart', e=>{ row.classList.add('dragging'); });
-  row.addEventListener('dragend', e=>{ row.classList.remove('dragging'); });
+
+  row.addEventListener('dragstart',()=>{row.classList.add('dragging');});
+  row.addEventListener('dragend',()=>{row.classList.remove('dragging');});
 }
 
 function calculate(){
-  const inputs = gradesList.querySelectorAll('input');
-  let total=0, count=0;
-  let grades = [];
+  const inputs=gradesList.querySelectorAll('input');
+  let total=0,count=0;
   inputs.forEach(i=>{
-    const val = i.value.trim();
+    const val=i.value.trim();
     if(!val) return;
-    let num = parseFloat(val);
-    if(isNaN(num)) num = letterToNum(val);
-    if(num!==null){ total+=num; count++; grades.push(num); }
+    let num=parseFloat(val);
+    if(isNaN(num)) num=letterToNum(val);
+    if(num!==null){total+=num; count++;}
   });
   if(count===0){
     avgNum.textContent='0.00';
     letterGrade.textContent='–';
     gradeMeter.style.width='0%';
     gradeMeter.style.background='var(--bad)';
-    histogram.innerHTML='';
     return;
   }
-  const avg = total/count;
-  avgNum.textContent = avg.toFixed(2);
-  letterGrade.textContent = numToLetter(avg);
-  const pct = Math.min(100, (avg/4)*100);
-  gradeMeter.style.width = pct+'%';
-  gradeMeter.style.background = getColor(avg);
-  updateHistogram(grades);
+  const avg=total/count;
+  avgNum.textContent=avg.toFixed(2);
+  letterGrade.textContent=numToLetter(avg);
+  gradeMeter.style.width=(avg/4*100)+'%';
+  gradeMeter.style.background=getColor(avg);
 }
 
-function updateHistogram(grades){
-  histogram.innerHTML='';
-  grades.forEach(g=>{
-    const bar = document.createElement('div');
-    bar.className='hist-bar';
-    const fill = document.createElement('div');
-    fill.className='hist-fill';
-    fill.style.height = (g/4*100)+'%';
-    fill.style.background = getColor(g);
-    bar.appendChild(fill);
-    histogram.appendChild(bar);
-  });
-}
-
-// Drag & drop logic
 gradesList.addEventListener('dragover', e=>{
   e.preventDefault();
-  const dragging = document.querySelector('.dragging');
-  const afterElement = [...gradesList.querySelectorAll('.grade-row:not(.dragging)')]
-    .reduce((closest, child)=>{
-      const box = child.getBoundingClientRect();
-      const offset = e.clientY - box.top - box.height/2;
-      if(offset < 0 && offset > closest.offset) return {offset:offset, element:child};
+  const dragging=document.querySelector('.dragging');
+  const afterElement=[...gradesList.querySelectorAll('.grade-row:not(.dragging)')]
+    .reduce((closest,child)=>{
+      const box=child.getBoundingClientRect();
+      const offset=e.clientY-box.top-box.height/2;
+      if(offset<0 && offset>closest.offset) return {offset:offset, element:child};
       else return closest;
-    }, {offset:Number.NEGATIVE_INFINITY}).element;
-  if(afterElement) gradesList.insertBefore(dragging, afterElement);
+    },{offset:Number.NEGATIVE_INFINITY}).element;
+  if(afterElement) gradesList.insertBefore(dragging,afterElement);
   else gradesList.appendChild(dragging);
   calculate();
 });
