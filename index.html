@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Smart Grade Calculator</title>
+<title>Grade Calc</title>
 <style>
 :root{
   --bg-dark:#0d1117;
@@ -37,13 +37,12 @@ body{
   color:var(--text-dark);
   transition:background var(--transition), color var(--transition);
 }
-
 body.light{
   background:#f7f7f9;
   color:var(--text-light);
 }
 
-/* Container & Card */
+/* Container */
 .container{
   width:100%;
   max-width:720px;
@@ -53,6 +52,7 @@ body.light{
   gap:20px;
 }
 
+/* Card */
 .card{
   width:100%;
   background:var(--card-dark);
@@ -65,7 +65,6 @@ body.light{
   gap:20px;
   position:relative;
 }
-
 body.light .card{
   background:var(--card-light);
   box-shadow:var(--shadow-light);
@@ -82,7 +81,7 @@ h1{
   -webkit-text-fill-color:transparent;
 }
 
-/* Help overlay */
+/* Help Overlay */
 .help-overlay{
   background:rgba(255,255,255,0.1);
   padding:12px 18px;
@@ -94,13 +93,12 @@ h1{
   box-shadow:0 5px 15px rgba(0,0,0,0.25);
   transition:all 0.3s ease;
 }
-
 body.light .help-overlay{
   background:rgba(255,255,255,0.85);
   color:var(--text-light);
 }
 
-/* Grades list */
+/* Grades List */
 .grades{
   display:flex;
   flex-direction:column;
@@ -108,7 +106,7 @@ body.light .help-overlay{
   width:100%;
 }
 
-/* Grade row */
+/* Grade Row */
 .grade-row{
   display:flex;
   flex-direction:column;
@@ -117,7 +115,7 @@ body.light .help-overlay{
   user-select:none;
   opacity:0;
   transform:scale(0.95);
-  transition:all 0.3s ease;
+  transition:all 0.35s cubic-bezier(0.4,0,0.2,1);
 }
 .grade-row.show{
   opacity:1;
@@ -148,12 +146,11 @@ body.light .help-overlay{
 body.light .grade-row input{color:var(--text-light);}
 .grade-row input:focus{
   outline:none;
-  border-color:var(--accent1);
-  background:rgba(255,255,255,0.12);
-  box-shadow:0 0 12px rgba(106,124,255,0.25);
+  border-color:var(--accent2);
+  box-shadow:0 0 16px rgba(61,214,198,0.3);
 }
 
-/* Remove button */
+/* Remove Button */
 .remove-btn{
   padding:6px 14px;
   font-size:13px;
@@ -174,7 +171,7 @@ body.light .grade-row input{color:var(--text-light);}
 }
 body.light .suggestion{color:var(--muted-light);}
 
-/* Grade bar */
+/* Grade Bar */
 .grade-bar{
   width:100%;
   height:12px;
@@ -213,7 +210,7 @@ body.light .suggestion{color:var(--muted-light);}
   font-weight:600;
 }
 
-/* Add button */
+/* Add Button */
 button.add-btn{
   padding:12px 18px;
   font-size:16px;
@@ -225,9 +222,12 @@ button.add-btn{
   cursor:pointer;
   transition:all 0.3s ease;
 }
-button.add-btn:hover{transform:scale(1.05); box-shadow:0 0 15px rgba(106,124,255,0.4);}
+button.add-btn:hover{
+  transform:scale(1.06);
+  box-shadow:0 0 25px rgba(106,124,255,0.5);
+}
 
-/* Settings panel */
+/* Settings Panel */
 #settingsBtn{
   position:absolute;
   top:20px;
@@ -238,7 +238,9 @@ button.add-btn:hover{transform:scale(1.05); box-shadow:0 0 15px rgba(106,124,255
   padding:8px 10px;
   border-radius:16px;
   cursor:pointer;
+  transition:all 0.3s ease;
 }
+#settingsBtn:hover{transform:scale(1.1);}
 #settingsPanel{
   position:absolute;
   top:60px;
@@ -247,11 +249,18 @@ button.add-btn:hover{transform:scale(1.05); box-shadow:0 0 15px rgba(106,124,255
   padding:15px;
   border-radius:16px;
   box-shadow:0 10px 30px rgba(0,0,0,0.4);
-  display:none;
+  display:flex;
   flex-direction:column;
   gap:10px;
   min-width:180px;
   z-index:10;
+  opacity:0;
+  transform:translateY(-20px);
+  transition:opacity 0.3s ease, transform 0.3s ease;
+}
+#settingsPanel.show{
+  opacity:1;
+  transform:translateY(0);
 }
 body.light #settingsPanel{background:var(--card-light);}
 #settingsPanel button{
@@ -260,9 +269,14 @@ body.light #settingsPanel{background:var(--card-light);}
   border:none;
   cursor:pointer;
   font-size:14px;
+  background:linear-gradient(90deg,var(--accent1),var(--accent2));
+  color:#071027;
+  transition:all 0.25s ease;
 }
-#settingsPanel button:hover{transform:scale(1.05);}
-input[type="file"]{display:none;}
+#settingsPanel button:hover{
+  transform:scale(1.05);
+  box-shadow:0 4px 20px rgba(106,124,255,0.4);
+}
 
 /* Responsive */
 @media(max-width:600px){
@@ -277,8 +291,8 @@ input[type="file"]{display:none;}
 </head>
 <body>
 <div class="container">
-  <h1>Smart Grade Calculator</h1>
-  <div class="help-overlay" id="helpOverlay">Enter your mastery levels to calculate your average.</div>
+  <h1>Grade Calc</h1>
+  <div class="help-overlay" id="helpOverlay">Add your mastery levels from Alma to calculate your average.</div>
   <button id="settingsBtn">⚙️</button>
   <div id="settingsPanel">
     <button id="themeBtn">Toggle Theme</button>
@@ -287,7 +301,7 @@ input[type="file"]{display:none;}
     <button id="resetBtn">Reset Data</button>
   </div>
   <div class="card">
-    <button id="addRowBtn" class="add-btn">+ Add Grade</button>
+    <button id="addRowBtn" class="add-btn">+ Add Mastery Level</button>
     <div class="grades" id="gradesList"></div>
     <div class="result" id="result">
       <div class="num" id="avgNum">0.00</div>
@@ -299,7 +313,7 @@ input[type="file"]{display:none;}
 </div>
 
 <script>
-// --- Variables ---
+// --- Elements ---
 const gradesList = document.getElementById('gradesList');
 const addRowBtn = document.getElementById('addRowBtn');
 const avgNum = document.getElementById('avgNum');
@@ -321,36 +335,36 @@ const gradingChart = [
   {grade:"C",min:1.71,max:2.01},{grade:"C-",min:1.31,max:1.71},{grade:"D",min:1,max:1.31},{grade:"F",min:0,max:1}
 ];
 
-// --- Functions ---
+// --- Helper Functions ---
 function letterToNum(letter){if(!letter)return null;letter=letter.trim().toUpperCase();const g=gradingChart.find(g=>g.grade===letter);return g?(g.min+g.max)/2:null;}
 function numToLetter(num){const g=gradingChart.find(g=>num>=g.min && num<g.max);return g?g.grade:"A";}
 function getColor(num){return num>=2.71?'var(--good)':num>=1.71?'var(--warn)':'var(--bad)';}
 
-// Create row
+// --- Create Grade Row ---
 function createRow(val=''){
-  const row = document.createElement('div'); row.className='grade-row'; row.draggable=true;
-  const container = document.createElement('div'); container.className='grade-inputs';
-  const inp = document.createElement('input'); inp.placeholder='Enter grade'; inp.value=val;
-  const remove = document.createElement('button'); remove.className='remove-btn'; remove.textContent='X';
-  remove.onclick = ()=>{row.remove(); calculate(true); updateHelp(); saveGrades();}
-  container.append(inp, remove);
-  const sugg = document.createElement('div'); sugg.className='suggestion';
-  const bar = document.createElement('div'); bar.className='grade-bar'; const fill = document.createElement('div'); fill.className='grade-bar-fill'; bar.appendChild(fill);
-  inp.oninput = ()=>{updateBar(inp,fill,sugg); calculate(true); updateHelp(); saveGrades();}
+  const row=document.createElement('div'); row.className='grade-row'; row.draggable=true;
+  const container=document.createElement('div'); container.className='grade-inputs';
+  const inp=document.createElement('input'); inp.placeholder='Enter grade'; inp.value=val;
+  const remove=document.createElement('button'); remove.className='remove-btn'; remove.textContent='X';
+  remove.onclick=()=>{row.remove(); calculate(true); updateHelp(); saveGrades();}
+  container.append(inp,remove);
+  const sugg=document.createElement('div'); sugg.className='suggestion';
+  const bar=document.createElement('div'); bar.className='grade-bar'; const fill=document.createElement('div'); fill.className='grade-bar-fill'; bar.appendChild(fill);
+  inp.oninput=()=>{updateBar(inp,fill,sugg); calculate(true); updateHelp(); saveGrades();}
   row.append(container,sugg,bar); gradesList.appendChild(row); setTimeout(()=>row.classList.add('show'),50);
   inp.focus();
-  row.ondragstart = ()=>row.classList.add('dragging'); row.ondragend = ()=>row.classList.remove('dragging');
+  row.ondragstart=()=>row.classList.add('dragging'); row.ondragend=()=>row.classList.remove('dragging');
   updateBar(inp,fill,sugg);
 }
 
-// Update bar
+// --- Update Bar ---
 function updateBar(inp,fill,sugg){
-  const val = inp.value.trim(); let num = parseFloat(val);
+  const val=inp.value.trim(); let num=parseFloat(val);
   if(isNaN(num)){const n=letterToNum(val); sugg.textContent=n!==null?`≈ ${n.toFixed(2)}`:''; fill.style.width=n!==null?(n/4*100)+'%':'0%'; fill.style.background=getColor(n);}
   else{const letter=numToLetter(num); sugg.textContent=`≈ ${letter}`; fill.style.width=(num/4*100)+'%'; fill.style.background=getColor(num);}
 }
 
-// Calculate average
+// --- Calculate Average ---
 function calculate(animate=false){
   const inputs=[...gradesList.querySelectorAll('input')]; let total=0,count=0;
   inputs.forEach(i=>{const val=i.value.trim(); if(!val)return; let num=parseFloat(val); if(isNaN(num)) num=letterToNum(val); if(num!==null){total+=num; count++;}});
@@ -359,17 +373,17 @@ function calculate(animate=false){
   if(animate){avgNum.classList.remove('animate'); void avgNum.offsetWidth; avgNum.classList.add('animate');}
 }
 
-// Update help overlay
+// --- Update Help Overlay ---
 function updateHelp(){
   const inputs=[...gradesList.querySelectorAll('input')];
   const empty=inputs.filter(i=>!i.value.trim()).length;
   const low=inputs.filter(i=>{const n=parseFloat(i.value)||letterToNum(i.value); return n!==null && n<2.0;}).length;
-  if(empty>0) helpOverlay.textContent=`Fill ${empty} missing mastery levels for accurate average!`;
-  else if(low>0) helpOverlay.textContent=`Heads up: ${low} low scores. Focus to improve!`;
-  else helpOverlay.textContent=`Great job! All grades entered.`;
+  if(empty>0) helpOverlay.textContent=`Add ${empty} missing mastery levels from Alma.`;
+  else if(low>0) helpOverlay.textContent=`Some low scores detected. Double-check mastery levels.`;
+  else helpOverlay.textContent=`All mastery levels entered. Great!`;
 }
 
-// Drag & drop
+// --- Drag & Drop ---
 gradesList.addEventListener('dragover',e=>{
   e.preventDefault();
   const dragging=document.querySelector('.dragging');
@@ -381,20 +395,21 @@ gradesList.addEventListener('dragover',e=>{
   calculate(true); updateHelp(); saveGrades();
 });
 
-// Settings
-settingsBtn.onclick=()=>{settingsPanel.style.display=settingsPanel.style.display==='flex'?'none':'flex'; settingsPanel.style.flexDirection='column';}
+// --- Settings Panel Toggle ---
+settingsBtn.onclick=()=>{settingsPanel.classList.toggle('show');}
 themeBtn.onclick=()=>{darkMode=!darkMode; document.body.classList.toggle('light',!darkMode);}
 resetBtn.onclick=()=>{localStorage.removeItem('grades'); gradesList.innerHTML=''; createRow(); calculate(true); updateHelp();}
 exportBtn.onclick=()=>{const vals=[...gradesList.querySelectorAll('input')].map(i=>i.value.trim()); const csv="data:text/csv;charset=utf-8,"+vals.join(","); const link=document.createElement('a'); link.href=encodeURI(csv); link.download='grades.csv'; document.body.appendChild(link); link.click(); link.remove();}
 importBtn.onclick=()=>{fileInput.click();}
 fileInput.onchange=(e)=>{const file=e.target.files[0]; if(!file) return; const reader=new FileReader(); reader.onload=()=>{const vals=reader.result.split(","); gradesList.innerHTML=''; vals.forEach(v=>createRow(v)); calculate(true); updateHelp(); saveGrades();}; reader.readAsText(file);}
 
-// Persistent storage
+// --- Persistent Storage ---
 function saveGrades(){const vals=[...gradesList.querySelectorAll('input')].map(i=>i.value.trim()); localStorage.setItem('grades',JSON.stringify(vals));}
 function loadGrades(){const vals=JSON.parse(localStorage.getItem('grades')||'[]'); gradesList.innerHTML=''; if(vals.length){vals.forEach(v=>createRow(v)); calculate(true); updateHelp();} else createRow();}
 
-// Init
-loadGrades(); addRowBtn.onclick=()=>{createRow(); updateHelp(); saveGrades();}
+// --- Init ---
+loadGrades();
+addRowBtn.onclick=()=>{createRow(); updateHelp(); saveGrades();}
 </script>
 </body>
 </html>
