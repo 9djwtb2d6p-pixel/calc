@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Grade Calc</title>
+<title>Ultimate Smart Grade Calculator</title>
 <style>
 :root{
   --bg-dark:#0d1117;
   --bg-light:#f7f7f9;
-  --card-dark:rgba(22,27,35,0.85);
-  --card-light:#ffffff;
+  --card-dark:rgba(22,27,35,0.9);
+  --card-light:rgba(255,255,255,0.9);
   --accent1:#6a7cff;
   --accent2:#3dd6c6;
   --good:#6fe3b6;
@@ -34,6 +34,7 @@ body{
   padding:40px 20px;
   background:linear-gradient(135deg,#0d1117,#12151c);
   color:var(--text-dark);
+  overflow-x:hidden;
   transition:background var(--transition), color var(--transition);
 }
 
@@ -43,27 +44,36 @@ body.light{
 }
 
 .container{
+  position:relative;
   width:100%;
-  max-width:700px;
+  max-width:720px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:20px;
+}
+
+.card{
+  width:100%;
   background:var(--card-dark);
   backdrop-filter:blur(20px);
-  border-radius:30px;
-  padding:35px;
+  border-radius:25px;
+  padding:30px 25px;
   box-shadow:var(--shadow-dark);
   display:flex;
   flex-direction:column;
-  gap:20px;
-  position:relative;
+  gap:15px;
   transition:all var(--transition);
+  position:relative;
 }
 
-body.light .container{
+body.light .card{
   background:var(--card-light);
   box-shadow:var(--shadow-light);
 }
 
 h1{
-  font-size:2.8rem;
+  font-size:3rem;
   font-weight:800;
   margin:0;
   text-align:center;
@@ -72,17 +82,25 @@ h1{
   -webkit-text-fill-color:transparent;
 }
 
-.help-text{
+.help-overlay{
+  position:fixed;
+  top:20px;
+  right:20px;
+  background:rgba(255,255,255,0.15);
+  backdrop-filter:blur(10px);
+  padding:15px 20px;
+  border-radius:20px;
+  color:var(--text-dark);
   font-size:14px;
-  color:var(--muted-dark);
-  text-align:center;
-  margin-bottom:10px;
-  min-height:20px;
-  transition:color 0.3s ease;
+  max-width:250px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.3);
+  transition:all 0.3s ease;
+  z-index:100;
 }
-body.light .help-text{color:var(--muted-light);}
 
-.grades{display:flex;flex-direction:column;gap:15px;}
+body.light .help-overlay{color:var(--text-light); background:rgba(255,255,255,0.95);}
+
+.grades{display:flex;flex-direction:column;gap:15px; width:100%;}
 
 .grade-row{
   display:flex;
@@ -92,6 +110,7 @@ body.light .help-text{color:var(--muted-light);}
   user-select:none;
   opacity:0; transform:scale(0.95);
   transition:all 0.3s ease;
+  position:relative;
 }
 .grade-row.show{opacity:1;transform:scale(1);}
 .grade-row.dragging{opacity:0.7;transform:scale(1.05);box-shadow:0 15px 35px rgba(0,0,0,0.4);}
@@ -111,7 +130,7 @@ body.light .grade-row input{color:var(--text-light);}
 .grade-row input:focus{
   outline:none;
   border-color:var(--accent1);
-  background:rgba(255,255,255,0.1);
+  background:rgba(255,255,255,0.12);
   box-shadow:0 0 15px rgba(106,124,255,0.3);
 }
 
@@ -158,6 +177,7 @@ body.light .suggestion{color:var(--muted-light);}
   display:flex;
   flex-direction:column;
   gap:15px;
+  width:100%;
 }
 
 .result .num{
@@ -222,11 +242,10 @@ body.light #settingsPanel{background:var(--card-light);}
   font-size:15px;
 }
 #settingsPanel button:hover{transform:scale(1.05);}
-
 input[type="file"]{display:none;}
 
-@media(max-width:520px){
-  .container{padding:20px;}
+@media(max-width:600px){
+  .card{padding:20px;}
   h1{font-size:2rem;}
   .grade-row input{font-size:15px;padding:12px 14px;}
   .remove-btn{padding:5px 12px;font-size:12px;}
@@ -238,25 +257,28 @@ input[type="file"]{display:none;}
 </head>
 <body>
 <div class="container">
-  <h1>GPA Calc</h1>
-  <div class="help-text" id="helpText">Tip: Enter your mastery levels below to see your average grade.</div>
+  <h1>Ultimate Smart Grade Calculator</h1>
+  <div class="help-overlay" id="helpOverlay">Tip: Enter your mastery levels below to see your average grade.</div>
   <button id="settingsBtn">⚙️</button>
   <div id="settingsPanel">
     <button id="themeBtn">Toggle Theme</button>
     <button id="exportBtn">Export CSV</button>
     <button id="importBtn">Import CSV</button>
   </div>
-  <button id="addRowBtn" class="add-btn">+ Add Grade</button>
-  <div class="grades" id="gradesList"></div>
-  <div class="result" id="result">
-    <div class="num" id="avgNum">0.00</div>
-    <div class="letter" id="letterGrade">–</div>
-    <div class="grade-bar"><div class="grade-bar-fill" id="gradeMeter"></div></div>
+  <div class="card">
+    <button id="addRowBtn" class="add-btn">+ Add Grade</button>
+    <div class="grades" id="gradesList"></div>
+    <div class="result" id="result">
+      <div class="num" id="avgNum">0.00</div>
+      <div class="letter" id="letterGrade">–</div>
+      <div class="grade-bar"><div class="grade-bar-fill" id="gradeMeter"></div></div>
+    </div>
+    <input type="file" id="fileInput" accept=".csv"/>
   </div>
-  <input type="file" id="fileInput" accept=".csv"/>
 </div>
 
 <script>
+// Elements
 const gradesList=document.getElementById('gradesList');
 const addRowBtn=document.getElementById('addRowBtn');
 const avgNum=document.getElementById('avgNum');
@@ -268,7 +290,7 @@ const fileInput=document.getElementById('fileInput');
 const themeBtn=document.getElementById('themeBtn');
 const settingsBtn=document.getElementById('settingsBtn');
 const settingsPanel=document.getElementById('settingsPanel');
-const helpText=document.getElementById('helpText');
+const helpOverlay=document.getElementById('helpOverlay');
 
 let darkMode=true;
 const gradingChart=[
@@ -295,11 +317,11 @@ function createInputRow(val=''){
   const inputContainer=document.createElement('div'); inputContainer.className='grade-inputs';
   const inp=document.createElement('input'); inp.type='text'; inp.placeholder='Enter grade'; inp.value=val;
   const removeBtn=document.createElement('button'); removeBtn.textContent='X'; removeBtn.className='remove-btn';
-  removeBtn.addEventListener('click',()=>{row.style.opacity='0'; row.style.transform='scale(0.8)'; setTimeout(()=>{row.remove(); calculate(); updateHelpText();},200);});
+  removeBtn.addEventListener('click',()=>{row.style.opacity='0'; row.style.transform='scale(0.8)'; setTimeout(()=>{row.remove(); calculate(); updateHelpOverlay();},200);});
   inputContainer.appendChild(inp); inputContainer.appendChild(removeBtn);
   const sugg=document.createElement('div'); sugg.className='suggestion';
   const bar=document.createElement('div'); bar.className='grade-bar'; const barFill=document.createElement('div'); barFill.className='grade-bar-fill'; bar.appendChild(barFill);
-  inp.addEventListener('input',()=>{updateBar(inp,barFill,sugg); calculate(true); updateHelpText();});
+  inp.addEventListener('input',()=>{updateBar(inp,barFill,sugg); calculate(true); updateHelpOverlay();});
   row.appendChild(inputContainer); row.appendChild(sugg); row.appendChild(bar);
   gradesList.appendChild(row); setTimeout(()=>row.classList.add('show'),50); inp.focus();
   row.addEventListener('dragstart',()=>{row.classList.add('dragging');});
@@ -321,27 +343,27 @@ function calculate(animate=false){
   if(animate){avgNum.classList.remove('animate'); void avgNum.offsetWidth; avgNum.classList.add('animate');}
 }
 
-function updateHelpText(){
+function updateHelpOverlay(){
   const inputs=[...gradesList.querySelectorAll('input')];
   const emptyCount=inputs.filter(i=>!i.value.trim()).length;
   let index=Math.floor(Math.random()*suggestionsPool.length);
   let suggestion=suggestionsPool[index];
   if(emptyCount===0) suggestion="Awesome! All grades entered. See your average above!";
-  helpText.textContent=suggestion;
+  helpOverlay.textContent=suggestion;
 }
 
 // Drag & drop
-gradesList.addEventListener('dragover',e=>{e.preventDefault(); const dragging=document.querySelector('.dragging'); const afterElement=[...gradesList.querySelectorAll('.grade-row:not(.dragging)')].reduce((closest,child)=>{const box=child.getBoundingClientRect(); const offset=e.clientY-box.top-box.height/2; if(offset<0 && offset>closest.offset) return {offset:offset, element:child}; return closest;},{offset:Number.NEGATIVE_INFINITY}).element; if(afterElement) gradesList.insertBefore(dragging,afterElement); else gradesList.appendChild(dragging); calculate(); updateHelpText();});
+gradesList.addEventListener('dragover',e=>{e.preventDefault(); const dragging=document.querySelector('.dragging'); const afterElement=[...gradesList.querySelectorAll('.grade-row:not(.dragging)')].reduce((closest,child)=>{const box=child.getBoundingClientRect(); const offset=e.clientY-box.top-box.height/2; if(offset<0 && offset>closest.offset) return {offset:offset, element:child}; return closest;},{offset:Number.NEGATIVE_INFINITY}).element; if(afterElement) gradesList.insertBefore(dragging,afterElement); else gradesList.appendChild(dragging); calculate(); updateHelpOverlay();});
 
 // Settings toggle
 settingsBtn.addEventListener('click',()=>{settingsPanel.style.display=settingsPanel.style.display==='flex'?'none':'flex'; settingsPanel.style.flexDirection='column';});
 themeBtn.addEventListener('click',()=>{darkMode=!darkMode; document.body.classList.toggle('light',!darkMode);});
 exportBtn.addEventListener('click',()=>{const values=[...gradesList.querySelectorAll('input')].map(i=>i.value.trim()); const csv="data:text/csv;charset=utf-8,"+values.join(","); const encoded=encodeURI(csv); const link=document.createElement('a'); link.setAttribute('href',encoded); link.setAttribute('download','grades.csv'); document.body.appendChild(link); link.click(); link.remove();});
 importBtn.addEventListener('click',()=>{fileInput.click();});
-fileInput.addEventListener('change',(e)=>{const file=e.target.files[0]; if(!file) return; const reader=new FileReader(); reader.onload=()=>{ const text=reader.result; const values=text.split(","); gradesList.innerHTML=''; values.forEach(v=>createInputRow(v)); calculate(true); updateHelpText(); }; reader.readAsText(file);});
+fileInput.addEventListener('change',(e)=>{const file=e.target.files[0]; if(!file) return; const reader=new FileReader(); reader.onload=()=>{ const text=reader.result; const values=text.split(","); gradesList.innerHTML=''; values.forEach(v=>createInputRow(v)); calculate(true); updateHelpOverlay(); }; reader.readAsText(file);});
 
 // Initial
-createInputRow(); addRowBtn.addEventListener('click',()=>{createInputRow(); updateHelpText();});
+createInputRow(); addRowBtn.addEventListener('click',()=>{createInputRow(); updateHelpOverlay();});
 </script>
 </body>
 </html>
