@@ -51,32 +51,6 @@ h1{
   -webkit-text-fill-color:transparent;
   text-align:center;
 }
-.input-group{
-  display:flex;
-  gap:10px;
-  align-items:center;
-}
-input[type=number], input[type=text]{
-  flex:1;
-  padding:10px;
-  border-radius:10px;
-  border:1px solid rgba(255,255,255,0.05);
-  background:transparent;
-  color:var(--text);
-  font-size:16px;
-}
-input:focus{border-color:var(--accent1);}
-button{
-  padding:8px 14px;
-  border:none;
-  border-radius:10px;
-  font-weight:700;
-  cursor:pointer;
-  background:linear-gradient(90deg,var(--accent1),var(--accent2));
-  color:#071027;
-  transition:transform .15s;
-}
-button:hover{transform:translateY(-2px);}
 .grades{
   display:flex;
   flex-direction:column;
@@ -101,10 +75,9 @@ button:hover{transform:translateY(-2px);}
   background:var(--bad);
   color:#fff;
   border-radius:8px;
+  cursor:pointer;
 }
-.remove-btn:hover{
-  opacity:0.85;
-}
+.remove-btn:hover{opacity:0.85;}
 .suggestion{
   font-size:12px;
   color:var(--muted);
@@ -145,63 +118,32 @@ button:hover{transform:translateY(-2px);}
   border-radius:10px;
   transition: width 0.5s, background 0.5s;
 }
-.advanced{
-  display:none;
-  flex-direction:column;
-  gap:10px;
-  border-top:1px solid rgba(255,255,255,0.05);
-  padding-top:10px;
-}
-.show-advanced{display:flex;}
-.small{font-size:12px;color:var(--muted);}
-.reset-btn{
+.flex-row{display:flex;gap:10px;}
+button.add-btn{
   background:var(--accent2);
 }
-.flex-row{display:flex;gap:10px;}
 </style>
 </head>
 <body>
 <div class="container">
   <h1>Grade Calc</h1>
-  <div class="input-group">
-    <input type="number" id="numBoxes" min="1" max="20" value="3">
-    <button id="createBtn">Create Inputs</button>
-  </div>
   <div class="grades" id="gradesList"></div>
+  <div class="flex-row">
+    <button id="addRowBtn" class="add-btn">+ Add Grade</button>
+  </div>
   <div class="result" id="result">
     <div class="num" id="avgNum">0.00</div>
     <div class="letter" id="letterGrade">–</div>
     <div class="meter"><div class="fill" id="gradeMeter"></div></div>
   </div>
-  <div class="flex-row">
-    <button id="addRowBtn">+ Add Grade</button>
-    <button id="resetBtn" class="reset-btn">Reset All</button>
-  </div>
-  <button id="toggleAdvanced">Advanced Options</button>
-  <div class="advanced" id="advancedOptions">
-    <label>Precision:
-      <select id="precision">
-        <option value="2">2 decimals</option>
-        <option value="1">1 decimal</option>
-        <option value="0">Whole number</option>
-      </select>
-    </label>
-    <div class="small">Optional: Adjust result decimal places</div>
-  </div>
 </div>
 
 <script>
-const gradesList=document.getElementById('gradesList');
-const createBtn=document.getElementById('createBtn');
-const addRowBtn=document.getElementById('addRowBtn');
-const resetBtn=document.getElementById('resetBtn');
-const numBoxes=document.getElementById('numBoxes');
-const avgNum=document.getElementById('avgNum');
-const letterGrade=document.getElementById('letterGrade');
-const toggleAdvanced=document.getElementById('toggleAdvanced');
-const advancedOptions=document.getElementById('advancedOptions');
-const precisionEl=document.getElementById('precision');
-const gradeMeter=document.getElementById('gradeMeter');
+const gradesList = document.getElementById('gradesList');
+const addRowBtn = document.getElementById('addRowBtn');
+const avgNum = document.getElementById('avgNum');
+const letterGrade = document.getElementById('letterGrade');
+const gradeMeter = document.getElementById('gradeMeter');
 
 const gradingChart=[
   {grade:"A",min:3.6,max:4.0},
@@ -218,46 +160,48 @@ const gradingChart=[
 
 function letterToNum(letter){
   if(!letter) return null;
-  letter=String(letter).trim().toUpperCase();
-  const found=gradingChart.find(g=>g.grade===letter);
-  return found?(found.min+found.max)/2:null;
+  letter = String(letter).trim().toUpperCase();
+  const found = gradingChart.find(g=>g.grade===letter);
+  return found ? (found.min+found.max)/2 : null;
 }
+
 function numToLetter(num){
-  const found=gradingChart.find(g=>num>=g.min && num<g.max);
-  return found?found.grade:"A";
+  const found = gradingChart.find(g=>num>=g.min && num<g.max);
+  return found ? found.grade : "A";
 }
+
 function getColor(num){
   if(num>=2.71) return 'var(--good)';
   if(num>=1.71) return 'var(--warn)';
   return 'var(--bad)';
 }
 
-function createInputRow(index){
-  const row=document.createElement('div');
+function createInputRow(){
+  const row = document.createElement('div');
   row.className='grade-row';
   
-  const inp=document.createElement('input');
+  const inp = document.createElement('input');
   inp.type='text';
-  inp.placeholder=`Grade ${index+1}`;
+  inp.placeholder='Enter grade';
   
-  const removeBtn=document.createElement('button');
+  const removeBtn = document.createElement('button');
   removeBtn.textContent='X';
   removeBtn.className='remove-btn';
   removeBtn.title='Remove this grade';
   removeBtn.addEventListener('click',()=>{row.remove(); calculate();});
   
-  const sugg=document.createElement('div');
+  const sugg = document.createElement('div');
   sugg.className='suggestion';
   
   inp.addEventListener('input',()=>{
-    const val=inp.value.trim();
-    let num=parseFloat(val);
+    const val = inp.value.trim();
+    let num = parseFloat(val);
     if(isNaN(num)){
-      const n=letterToNum(val);
-      sugg.textContent=n!==null?`≈ ${n.toFixed(2)}`:'';
+      const n = letterToNum(val);
+      sugg.textContent = n!==null ? `≈ ${n.toFixed(2)}` : '';
     }else{
-      const letter=numToLetter(num);
-      sugg.textContent=`≈ ${letter}`;
+      const letter = numToLetter(num);
+      sugg.textContent = `≈ ${letter}`;
     }
     calculate();
   });
@@ -268,22 +212,14 @@ function createInputRow(index){
   gradesList.appendChild(row);
 }
 
-function renderRows(n){
-  gradesList.innerHTML='';
-  for(let i=0;i<n;i++) createInputRow(i);
-  calculate();
-}
-
-function addRow(){ createInputRow(gradesList.children.length); }
-function resetAll(){ renderRows(0); }
 function calculate(){
-  const inputs=gradesList.querySelectorAll('input');
-  let total=0,count=0;
+  const inputs = gradesList.querySelectorAll('input');
+  let total=0, count=0;
   inputs.forEach(i=>{
-    const val=i.value.trim();
+    const val = i.value.trim();
     if(!val) return;
-    let num=parseFloat(val);
-    if(isNaN(num)) num=letterToNum(val);
+    let num = parseFloat(val);
+    if(isNaN(num)) num = letterToNum(val);
     if(num!==null){ total+=num; count++; }
   });
   if(count===0){
@@ -293,23 +229,17 @@ function calculate(){
     gradeMeter.style.background='var(--bad)';
     return;
   }
-  const precision=parseInt(precisionEl.value)||2;
-  const avg=total/count;
-  avgNum.textContent=avg.toFixed(precision);
-  letterGrade.textContent=numToLetter(avg);
-  const pct=Math.min(100,(avg/4)*100);
-  gradeMeter.style.width=pct+'%';
-  gradeMeter.style.background=getColor(avg);
+  const avg = total/count;
+  avgNum.textContent = avg.toFixed(2);
+  letterGrade.textContent = numToLetter(avg);
+  const pct = Math.min(100, (avg/4)*100);
+  gradeMeter.style.width = pct+'%';
+  gradeMeter.style.background = getColor(avg);
 }
 
-createBtn.addEventListener('click',()=>{ renderRows(parseInt(numBoxes.value)||3); });
-addRowBtn.addEventListener('click',addRow);
-resetBtn.addEventListener('click',resetAll);
-toggleAdvanced.addEventListener('click',()=>{ advancedOptions.classList.toggle('show-advanced'); });
-precisionEl.addEventListener('change',calculate);
-
-// Initialize with 3 grades
-renderRows(3);
+// Initialize with 1 input
+createInputRow();
+addRowBtn.addEventListener('click',createInputRow);
 </script>
 </body>
 </html>
